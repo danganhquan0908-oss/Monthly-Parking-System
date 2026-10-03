@@ -1,0 +1,148 @@
+@MonthlyParkingSystem.Api_HostAddress = http://localhost:5127
+@mpsToken = paste-bearer-token-here
+@platformKey = paste-platform-provisioning-key-here
+
+### Begin self-service school registration (requires configured SMTP)
+POST {{MonthlyParkingSystem.Api_HostAddress}}/api/v1/public/school-registrations/send-otp
+Content-Type: application/json
+
+{
+  "schoolCode": "ABC-COLLEGE",
+  "schoolName": "Trường ABC",
+  "emailAddress": "manager@example.edu.vn",
+  "phoneNumber": "0912345678",
+  "username": "schooladmin",
+  "password": "ReplaceWithLongPassword!2026"
+}
+
+### Verify the email code and create the school plus first Admin
+POST {{MonthlyParkingSystem.Api_HostAddress}}/api/v1/public/school-registrations/verify-otp
+Content-Type: application/json
+
+{
+  "registrationId": "00000000-0000-0000-0000-000000000000",
+  "code": "000000"
+}
+
+### Create a school and issue the one-time first Manager invitation
+POST {{MonthlyParkingSystem.Api_HostAddress}}/api/v1/platform/schools
+X-MPS-Platform-Key: {{platformKey}}
+Content-Type: application/json
+
+{
+  "code": "SAMPLE-COLLEGE",
+  "name": "Sample College"
+}
+
+### Log in and copy accessToken from the response
+POST {{MonthlyParkingSystem.Api_HostAddress}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "schoolCode": "MPS-DEFAULT",
+  "username": "mpsadmin",
+  "password": "YOUR_PRIVATE_LONG_PASSWORD_01"
+}
+
+### Accept a Manager/Staff invitation and choose credentials
+POST {{MonthlyParkingSystem.Api_HostAddress}}/api/v1/auth/accept-invitation
+Content-Type: application/json
+
+{
+  "token": "PASTE_ONE_TIME_INVITATION_TOKEN",
+  "username": "schoolmanager",
+  "password": "YOUR_PRIVATE_LONG_PASSWORD_01"
+}
+
+### List staff accounts in this school
+GET {{MonthlyParkingSystem.Api_HostAddress}}/api/v1/auth/staff
+Authorization: Bearer {{mpsToken}}
+Accept: application/json
+
+### Invite Guard or Staff in this school
+POST {{MonthlyParkingSystem.Api_HostAddress}}/api/v1/auth/staff/invitations
+Authorization: Bearer {{mpsToken}}
+Content-Type: application/json
+
+{
+  "role": "Guard"
+}
+
+### Suspend/reactivate a school (platform key)
+PUT {{MonthlyParkingSystem.Api_HostAddress}}/api/v1/platform/schools/1/active
+X-MPS-Platform-Key: {{platformKey}}
+Content-Type: application/json
+
+{
+  "isActive": false
+}
+
+###
+
+### Register a monthly parking contract
+POST {{MonthlyParkingSystem.Api_HostAddress}}/api/v1/contracts
+Authorization: Bearer {{mpsToken}}
+Content-Type: application/json
+
+{
+  "studentCode": "SV001",
+  "fullName": "Nguyen Van A",
+  "roomNumber": "A101",
+  "phoneNumber": "0900000000",
+  "licensePlate": "59A1-12345",
+  "startDate": "2026-10-01",
+  "endDate": "2026-10-31"
+}
+
+### Get a contract
+GET {{MonthlyParkingSystem.Api_HostAddress}}/api/v1/contracts/1
+Authorization: Bearer {{mpsToken}}
+Accept: application/json
+
+### Update student and contract details
+PUT {{MonthlyParkingSystem.Api_HostAddress}}/api/v1/contracts/1
+Authorization: Bearer {{mpsToken}}
+Content-Type: application/json
+
+{
+  "fullName": "Nguyen Van A",
+  "roomNumber": "A101",
+  "licensePlate": "59A1-12345",
+  "startDate": "2026-10-01",
+  "endDate": "2026-11-30"
+}
+
+### Change vehicle and record audit history
+PUT {{MonthlyParkingSystem.Api_HostAddress}}/api/v1/contracts/1/change-vehicle
+Authorization: Bearer {{mpsToken}}
+Content-Type: application/json
+
+{
+  "licensePlate": "59A1-67890",
+  "changedBy": "staff-001",
+  "changeNote": "Sinh viên đổi xe"
+}
+
+### Read vehicle change history
+GET {{MonthlyParkingSystem.Api_HostAddress}}/api/v1/contracts/1/vehicle-history
+Authorization: Bearer {{mpsToken}}
+Accept: application/json
+
+### Cancel an active contract
+PUT {{MonthlyParkingSystem.Api_HostAddress}}/api/v1/contracts/1/cancel
+Authorization: Bearer {{mpsToken}}
+Content-Type: application/json
+
+{
+  "cancellationNote": "Sinh viên ngừng gửi xe"
+}
+
+### Dashboard quick stats
+GET {{MonthlyParkingSystem.Api_HostAddress}}/api/v1/contracts/stats
+Authorization: Bearer {{mpsToken}}
+Accept: application/json
+
+### Search and paginate dashboard contracts
+GET {{MonthlyParkingSystem.Api_HostAddress}}/api/v1/contracts/expiring?page=1&pageSize=10&search=A101&status=all
+Authorization: Bearer {{mpsToken}}
+Accept: application/json

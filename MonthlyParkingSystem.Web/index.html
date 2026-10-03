@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f7fb">
+  <title>MPS · Quản lý gửi xe tháng</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <style>
+    :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#182230;background:#f5f7fb;font-synthesis:none;text-rendering:optimizeLegibility;font-weight:400}
+    *{box-sizing:border-box}body{margin:0;min-width:320px;background:#f5f7fb}button,input,select{font:inherit}button{cursor:pointer}
+    .shell{max-width:1440px;margin:0 auto;padding:28px 36px 42px}.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:36px}
+    .brand{display:flex;align-items:center;gap:12px}.brand-mark{width:42px;height:42px;border-radius:13px;background:#194b3d;color:#fff;display:grid;place-items:center;box-shadow:0 5px 14px #194b3d2b}
+    .brand-mark svg{width:23px;height:23px}.brand-name{font-size:16px;font-weight:750;letter-spacing:-.02em}.brand-sub{font-size:12px;color:#7b8794;margin-top:2px}
+    .top-meta{display:flex;align-items:center;gap:12px}.system-tag{padding:8px 11px;border:1px solid #e2e8ee;border-radius:999px;background:white;font-size:12px;color:#687586;display:flex;align-items:center;gap:7px}.dot{width:7px;height:7px;background:#22a06b;border-radius:50%}.avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#e7efe9;color:#285640;font-size:12px;font-weight:700}
+    .heading{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px}.eyebrow{font-size:12px;color:#788594;font-weight:650;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}.heading h1{font-size:29px;line-height:1.15;letter-spacing:-.04em;margin:0;font-weight:740}.heading p{margin:9px 0 0;color:#7c8795;font-size:14px}.today{display:flex;align-items:center;gap:9px;color:#647182;font-size:13px;padding:9px 12px;background:#fff;border:1px solid #e8edf2;border-radius:10px}.today svg{width:16px;height:16px;color:#83909f}
+    .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:24px}.stat-card{position:relative;overflow:hidden;text-align:left;border:1px solid #e8edf2;border-radius:14px;padding:20px 21px;background:#fff;min-height:126px;transition:box-shadow .18s,border-color .18s,transform .18s;color:inherit}.stat-card:hover{transform:translateY(-1px);box-shadow:0 9px 22px #1a2c3b0c}.stat-card.selected{border-color:#b8c9c1;box-shadow:0 0 0 2px #194b3d0b}.stat-top{display:flex;align-items:center;justify-content:space-between}.stat-label{font-size:13px;color:#697687;font-weight:550}.stat-icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center}.stat-icon svg{width:18px;height:18px}.stat-value{font-size:30px;line-height:1;font-weight:730;letter-spacing:-.04em;margin-top:14px;color:#1b2937}.stat-foot{font-size:11px;color:#8b96a3;margin-top:7px}.green .stat-icon{color:#16845b;background:#e8f5ee}.amber .stat-icon{color:#ad720a;background:#fff5df}.red .stat-icon{color:#c34d48;background:#fff0ef}
+    .panel{background:white;border:1px solid #e8edf2;border-radius:15px;overflow:hidden;box-shadow:0 2px 8px #263b4b05}.panel-head{padding:19px 21px;border-bottom:1px solid #eef1f4;display:flex;align-items:center;justify-content:space-between;gap:18px}.panel-title{font-size:15px;font-weight:680;letter-spacing:-.01em}.panel-caption{font-size:12px;color:#8994a0;margin-top:4px}.tools{display:flex;align-items:center;gap:9px}.search{position:relative;width:min(335px,34vw)}.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:#8c98a6;pointer-events:none}.search input{width:100%;height:39px;border:1px solid #e3e8ed;border-radius:9px;padding:0 12px 0 37px;outline:none;color:#253443;background:#fff;font-size:13px}.search input::placeholder{color:#a0aab5}.search input:focus,select:focus{border-color:#84aa98;box-shadow:0 0 0 3px #194b3d10}.filter{height:39px;padding:0 30px 0 11px;border:1px solid #e3e8ed;border-radius:9px;color:#566474;background-color:white;font-size:12px;outline:none}.icon-button{width:39px;height:39px;border:1px solid #e3e8ed;background:#fff;border-radius:9px;color:#6d7a89;display:grid;place-items:center}.icon-button:hover{background:#f7f9fa}.icon-button svg{width:16px;height:16px}.icon-button.spinning svg{animation:spin .9s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+    .table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;text-align:left;white-space:nowrap}thead th{padding:12px 20px;background:#fafbfc;color:#8b96a2;font-size:10px;letter-spacing:.065em;text-transform:uppercase;font-weight:650}tbody td{padding:15px 20px;border-top:1px solid #f0f2f5;font-size:13px;color:#526071}tbody tr:hover{background:#fcfdfd}.plate{font-weight:700;color:#263746;letter-spacing:.025em;font-variant-numeric:tabular-nums}.student-name{font-weight:600;color:#354353}.student-code{font-size:11px;color:#929daa;margin-top:3px}.room{display:inline-flex;padding:5px 8px;border-radius:6px;background:#f3f5f7;color:#667484;font-size:11px;font-weight:600}.date{color:#576575;font-variant-numeric:tabular-nums}.expiry{font-weight:590}.status{display:inline-flex;align-items:center;gap:6px;padding:6px 9px;border-radius:999px;font-size:11px;font-weight:630}.status-dot{height:6px;width:6px;border-radius:50%;background:currentColor}.status-active{color:#157a53;background:#e9f6ef}.status-soon{color:#a56d06;background:#fff4dc}.status-expired{color:#be4842;background:#fff0ee}.status-cancelled{color:#788493;background:#f0f2f4}.muted{color:#98a2ae!important}
+    .loading,.empty,.error{padding:45px 18px;text-align:center;color:#8692a0;font-size:13px}.empty strong{display:block;font-size:14px;color:#4c5c6c;margin-bottom:5px}.error{color:#b7443d;background:#fff8f7}.panel-foot{display:flex;justify-content:space-between;align-items:center;padding:13px 20px;border-top:1px solid #eef1f4;color:#8a95a2;font-size:12px}.pager{display:flex;align-items:center;gap:7px}.page-info{color:#657282;margin:0 4px}.page-btn{height:30px;min-width:31px;padding:0 8px;border:1px solid #e6eaee;border-radius:7px;background:#fff;color:#617080;font-size:12px}.page-btn:hover:not(:disabled){background:#f5f7f8}.page-btn:disabled{opacity:.42;cursor:default}.page-btn svg{width:13px;height:13px;vertical-align:middle}.footnote{text-align:center;color:#a0aab5;font-size:11px;margin-top:18px}
+    .login-page{min-height:100vh;display:grid;place-items:center;padding:22px;background:radial-gradient(ellipse at 52% 0%,#e8f1ec 0%,#f5f7fb 48%)}.login-card{width:min(100%,420px);background:#fff;border:1px solid #e4eaf0;border-radius:18px;padding:32px;box-shadow:0 18px 55px #1e34400e}.login-brand{display:flex;align-items:center;gap:11px;margin-bottom:29px}.login-card h1{font-size:23px;letter-spacing:-.035em;margin:0;color:#1c2a36}.login-subtitle{font-size:13px;line-height:1.6;color:#7a8794;margin:8px 0 24px}.login-card label{display:block;font-size:12px;color:#526171;font-weight:600;margin:14px 0 7px}.login-card input{width:100%;height:43px;border:1px solid #dfe6eb;border-radius:9px;padding:0 12px;color:#263644;font-size:13px;outline:none}.login-card input:focus{border-color:#84aa98;box-shadow:0 0 0 3px #194b3d10}.login-submit{height:43px;width:100%;border:0;border-radius:9px;margin-top:22px;background:#194b3d;color:#fff;font-size:13px;font-weight:650}.login-submit:hover:not(:disabled){background:#123e32}.login-submit:disabled{opacity:.65;cursor:wait}.login-error{min-height:18px;margin-top:12px;color:#b7443d;font-size:12px;line-height:1.5}.bootstrap-link{display:block;width:100%;padding:13px 0 0;margin-top:10px;border:0;border-top:1px solid #eef1f4;background:transparent;color:#687888;font-size:12px}.bootstrap-link:hover{color:#194b3d}.staff-label{font-size:12px;color:#637181}.logout-button{border:1px solid #e2e8ee;background:#fff;border-radius:8px;padding:8px 10px;color:#657282;font-size:12px}.logout-button:hover{background:#f8faf9;color:#284c3f}
+    .login-link{display:block;margin-top:15px;text-align:center;color:#60706b;font-size:12px;text-decoration:none}.login-link:hover{color:#194b3d}
+    .dialog-backdrop{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:18px;background:#14232dcc;backdrop-filter:blur(5px)}.account-dialog{width:min(100%,760px);max-height:min(88vh,780px);overflow:auto;padding:24px;background:#fff;border-radius:16px;box-shadow:0 24px 80px #0003}.dialog-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px}.dialog-heading h2{font-size:20px;margin:0;color:#1c2a36}.dialog-heading p{font-size:12px;color:#7a8794;margin:5px 0}.dialog-close{border:1px solid #e2e8ee;background:#fff;border-radius:8px;padding:7px 10px;color:#657282}.account-form{display:grid;grid-template-columns:1fr 190px auto;align-items:end;gap:12px;padding:15px;background:#f7f9f8;border:1px solid #e8eeea;border-radius:12px}.account-form label{display:block;font-size:11px;color:#657282;margin-bottom:6px}.account-form select,.account-form input{height:38px;width:100%;border:1px solid #dfe6eb;border-radius:8px;padding:0 10px;background:#fff;color:#293744}.small-submit{height:38px;border:0;border-radius:8px;background:#194b3d;color:white;padding:0 14px;font-size:12px;font-weight:650}.invite-result{padding:13px;margin:12px 0;border:1px solid #d9eadf;border-radius:10px;background:#f3faf5;color:#355a46;font-size:12px;overflow-wrap:anywhere}.invite-result button{margin-left:8px;border:0;border-radius:6px;background:#194b3d;color:#fff;padding:6px 9px}.account-table{margin-top:16px}.account-table th,.account-table td{padding:11px 12px;font-size:12px}.account-error{color:#b7443d;font-size:12px;margin-top:10px}
+    .primary-button{height:39px;border:0;border-radius:9px;padding:0 14px;background:#194b3d;color:white;font-size:12px;font-weight:650;white-space:nowrap}.primary-button:hover:not(:disabled),.small-submit:hover:not(:disabled){background:#123e32}.primary-button:disabled,.small-submit:disabled{opacity:.6;cursor:wait}.table-actions{display:flex;align-items:center;gap:6px}.table-action{border:1px solid #e2e8ee;border-radius:7px;background:#fff;padding:6px 8px;color:#456455;font-size:11px;white-space:nowrap}.table-action:hover{background:#f3f8f5}.table-action.danger{color:#a53e3a}.contract-dialog{width:min(100%,680px)}.contract-form{display:grid;gap:15px}.contract-fields{display:grid;grid-template-columns:1fr 1fr;gap:13px}.contract-fields label,.vehicle-form label{display:block;margin-bottom:6px;color:#657282;font-size:11px;font-weight:600}.contract-fields input,.vehicle-form input,.vehicle-form textarea{width:100%;height:40px;border:1px solid #dfe6eb;border-radius:8px;padding:0 10px;background:#fff;color:#293744;outline:none}.contract-fields input:focus,.vehicle-form input:focus,.vehicle-form textarea:focus{border-color:#84aa98;box-shadow:0 0 0 3px #194b3d10}.contract-fields input:read-only{background:#f3f5f7;color:#687586}.form-hint{grid-column:1/-1;color:#778493;font-size:11px;line-height:1.5}.contract-actions{display:flex;justify-content:flex-end;gap:9px;padding-top:4px}.vehicle-form{display:grid;gap:13px}.vehicle-form textarea{height:86px;padding:10px;resize:vertical}.contract-error{margin:0}.actions-heading{width:190px}
+    .history-list{display:grid;gap:10px;margin:0;padding:0;list-style:none}.history-entry{padding:14px 15px;border:1px solid #e7ecef;border-radius:11px;background:#fbfcfc}.history-entry-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.history-entry-title{font-size:13px;font-weight:700;color:#253443}.history-entry-time{font-size:11px;color:#8793a0;text-align:right;white-space:nowrap}.history-entry-actor{margin-top:5px;font-size:12px;color:#607080}.history-entry-details{margin-top:8px;font-size:12px;line-height:1.55;color:#3f4d59;overflow-wrap:anywhere}.history-error{margin:0 0 12px}
+    @media(max-width:850px){.shell{padding:22px 20px 34px}.panel-head{align-items:flex-start;flex-direction:column}.tools{width:100%}.search{width:auto;flex:1}.heading h1{font-size:26px}}
+    @media(max-width:600px){.shell{padding:17px 13px 28px}.topbar{margin-bottom:27px}.brand-sub,.system-tag,.staff-label{display:none}.heading{align-items:flex-start;flex-direction:column;gap:13px;margin-bottom:18px}.heading h1{font-size:24px}.stats{gap:9px;margin-bottom:15px}.stat-card{min-height:105px;padding:13px 12px;border-radius:12px}.stat-label{font-size:11px;line-height:1.3;max-width:82px}.stat-icon{width:28px;height:28px;border-radius:8px}.stat-icon svg{width:15px;height:15px}.stat-value{font-size:25px;margin-top:12px}.stat-foot{font-size:10px}.panel{border-radius:12px}.panel-head{padding:15px 13px}.tools{gap:7px;flex-wrap:wrap}.tools>.primary-button{width:100%}.filter{max-width:118px;padding-left:8px;font-size:11px}.search input{font-size:12px}.icon-button{width:36px;height:39px}thead th{padding:11px 13px}tbody td{padding:13px}table{min-width:950px}.panel-foot{padding:12px 13px}.footnote{line-height:1.5}.login-card{padding:25px 21px}}
+    @media(max-width:600px){.account-dialog{padding:18px}.account-form{grid-template-columns:1fr}.contract-fields{grid-template-columns:1fr}.form-hint{grid-column:auto}.dialog-heading h2{font-size:18px}}
+
+    /* Dark Mode */
+    html.dark body, html.dark .login-page { background: #0f172a; color: #f8fafc; }
+    html.dark .login-card, html.dark .panel, html.dark .stat-card, html.dark .icon-button, html.dark .today, html.dark .system-tag { background: #1e293b; border-color: #334155; color: #f8fafc; }
+    html.dark .search input, html.dark .filter { background: #0f172a; border-color: #334155; color: #f8fafc; }
+    html.dark .heading h1, html.dark .stat-value, html.dark .panel-title, html.dark .login-card h1 { color: #f8fafc; }
+    html.dark .stat-foot, html.dark .eyebrow, html.dark .panel-caption, html.dark .login-subtitle, html.dark .login-card label, html.dark .brand-sub { color: #94a3b8; }
+    html.dark thead th { background: #1e293b; color: #94a3b8; border-bottom: 1px solid #334155; }
+    html.dark tbody td { border-top: 1px solid #334155; color: #cbd5e1; }
+    html.dark tbody tr:hover { background: #334155; }
+    html.dark .plate { color: #e2e8f0; }
+    html.dark .student-name { color: #f1f5f9; }
+    html.dark .room { background: #334155; color: #cbd5e1; }
+    html.dark .page-btn { background: #1e293b; border-color: #334155; color: #cbd5e1; }
+    html.dark .page-btn:hover:not(:disabled) { background: #334155; }
+    html.dark .logout-button { background: #1e293b; border-color: #334155; color: #cbd5e1; }
+    html.dark .logout-button:hover { background: #334155; color: #f8fafc; }
+    html.dark .green .stat-icon { background: #064e3b; color: #34d399; }
+    html.dark .amber .stat-icon { background: #78350f; color: #fbbf24; }
+    html.dark .red .stat-icon { background: #7f1d1d; color: #f87171; }
+    html.dark .status-active { color: #6ee7b7; background: #064e3b; }
+    html.dark .status-soon { color: #fcd34d; background: #78350f; }
+    html.dark .status-expired { color: #fca5a5; background: #7f1d1d; }
+    html.dark .status-cancelled { color: #94a3b8; background: #334155; }
+    html.dark .table-action, html.dark .dialog-close { background:#1e293b; border-color:#334155; color:#cbd5e1; }
+    html.dark .table-action:hover { background:#334155; }
+    html.dark .account-dialog { background:#1e293b; color:#f8fafc; }
+    html.dark .dialog-heading h2 { color:#f8fafc; }
+    html.dark .dialog-heading p, html.dark .history-entry-time, html.dark .history-entry-actor { color:#94a3b8; }
+    html.dark .history-entry { background:#0f172a; border-color:#334155; }
+    html.dark .history-entry-title, html.dark .history-entry-details { color:#e2e8f0; }
+    html.dark .contract-fields input, html.dark .vehicle-form input, html.dark .vehicle-form textarea { background:#0f172a; border-color:#334155; color:#f8fafc; }
+    html.dark .contract-fields input:read-only { background:#334155; color:#94a3b8; }
+    html.dark .form-hint { color:#94a3b8; }
+
+    /* Modern Liveliness Additions */
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulseAlert {
+        0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+        70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+    @keyframes pulseAmber {
+        0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+        70% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+    }
+    
+    body { 
+        background: linear-gradient(135deg, #f6f8fb 0%, #e9eef5 100%); 
+        background-attachment: fixed; 
+    }
+    html.dark body, html.dark .login-page { 
+        background: radial-gradient(circle at top left, #1e293b, #0f172a 80%); 
+        background-attachment: fixed; 
+    }
+    
+    .stat-card { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    .stat-card:nth-child(1) { animation-delay: 0.1s; }
+    .stat-card:nth-child(2) { animation-delay: 0.2s; }
+    .stat-card:nth-child(3) { animation-delay: 0.3s; }
+    
+    .heading { animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    
+    .panel { animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both; }
+    
+    /* Pulsing indicators for urgency */
+    .status-expired .status-dot { border-radius: 50%; animation: pulseAlert 2s infinite; }
+    .status-soon .status-dot { border-radius: 50%; animation: pulseAmber 2.5s infinite; }
+    
+    /* Glassmorphism Topbar */
+    .topbar {
+        position: sticky; top: 0; z-index: 50;
+        background: rgba(245, 247, 251, 0.7);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        padding: 16px 36px;
+        margin: -28px -36px 30px -36px;
+        border-bottom: 1px solid rgba(0,0,0,0.04);
+    }
+    @media(max-width:850px) { .topbar { padding: 16px 20px; margin: -22px -20px 24px -20px; } }
+    @media(max-width:600px) { .topbar { padding: 14px 13px; margin: -17px -13px 20px -13px; } }
+    
+    html.dark .topbar {
+        background: rgba(15, 23, 42, 0.75);
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    
+    /* Smooth theme transitions */
+    body, .panel, .stat-card, .topbar, th, td, button, input, select {
+        transition: background-color 0.4s ease, border-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease;
+    }
+    
+    /* Lively table row hover */
+    tbody tr { transition: transform 0.2s ease, background-color 0.3s ease; }
+    tbody tr:hover { 
+        transform: scale(1.008); 
+        box-shadow: 0 4px 20px rgba(0,0,0,0.04); 
+        z-index: 2; 
+        position: relative; 
+    }
+    html.dark tbody tr:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.25); }
+    
+    /* Modern shadow for brand mark */
+    .brand-mark { box-shadow: 0 8px 24px rgba(25, 75, 61, 0.25); }
+
+  </style>
+</head>
+<body>
+  <div id="app">
+    <section v-if="!authToken" class="login-page">
+      <div class="login-card">
+        <div class="login-brand">
+          <div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5v8a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z"/><path d="M8 20v-6h8v6M7 10h10"/></svg></div>
+          <div><div class="brand-name">MPS <span style="font-weight:450;color:#788594">· Residence</span></div><div class="brand-sub">Monthly Parking System</div></div>
+        </div>
+        <div class="eyebrow">Truy cập nội bộ · {{ invitationToken ? 'lời mời tài khoản' : 'theo trường' }}</div>
+        <h1>{{ invitationToken ? 'Hoàn tất tài khoản' : 'Đăng nhập hệ thống' }}</h1>
+        <p class="login-subtitle">{{ invitationToken ? 'Chọn tên đăng nhập và mật khẩu cho tài khoản trường của bạn.' : 'Dành cho Quản sinh, Bảo vệ và nhân viên KTX.' }}</p>
+        <form v-if="invitationToken" @submit.prevent="acceptInvitation">
+          <label for="invite-username">Tên đăng nhập</label>
+          <input id="invite-username" v-model="inviteUsername" autocomplete="username" required minlength="3" maxlength="64" placeholder="Tên đăng nhập">
+          <label for="invite-password">Mật khẩu</label>
+          <input id="invite-password" v-model="invitePassword" type="password" autocomplete="new-password" required minlength="12" maxlength="128" placeholder="Tối thiểu 12 ký tự">
+          <button class="login-submit" type="submit" :disabled="authBusy">{{ authBusy ? 'Đang kích hoạt…' : 'Kích hoạt tài khoản' }}</button>
+        </form>
+        <form v-else @submit.prevent="login">
+          <label for="school-code">Mã trường</label>
+          <input id="school-code" v-model.trim="schoolCode" autocomplete="organization" required minlength="3" maxlength="32" placeholder="Ví dụ: MPS-DEFAULT">
+          <label for="login-username">Tên đăng nhập</label>
+          <input id="login-username" v-model="loginUsername" autocomplete="username" required minlength="3" maxlength="64" placeholder="Tên đăng nhập">
+          <label for="login-password">Mật khẩu</label>
+          <input id="login-password" v-model="loginPassword" type="password" autocomplete="current-password" required minlength="12" maxlength="128" placeholder="Tối thiểu 12 ký tự">
+          <button class="login-submit" type="submit" :disabled="authBusy">{{ authBusy ? 'Đang xác thực…' : 'Đăng nhập' }}</button>
+        </form>
+        <div class="login-error" role="alert">{{ authError }}</div>
+        <a v-if="!invitationToken" class="login-link" :href="registrationUrl">Đăng ký trường mới</a>
+      </div>
+    </section>
+    <div v-else class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5v8a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z"/><path d="M8 20v-6h8v6M7 10h10"/></svg>
+        </div>
+        <div><div class="brand-name">MPS <span style="font-weight:450;color:#788594">· Residence</span></div><div class="brand-sub">Monthly Parking System</div></div>
+      </div>
+      <div class="top-meta"><button @click="toggleTheme" class="icon-button" style="width: 32px; height: 32px; border: none; background: transparent;" aria-label="Toggle theme"><svg v-if="theme==='dark'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42 1.42"/></svg><svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button><div class="system-tag"><span class="dot"></span> {{ currentUser.schoolName }}</div><span class="staff-label">{{ currentUser.username }} · {{ roleLabel(currentUser.role) }}</span><button v-if="canManageStaff" class="logout-button" @click="openAccounts">Tài khoản</button><button class="logout-button" @click="logout">Đăng xuất</button></div>
+    </header>
+
+    <main>
+      <div v-if="showContractDialog" class="dialog-backdrop" @click.self="closeContractDialog">
+        <section class="account-dialog contract-dialog" role="dialog" aria-modal="true" aria-labelledby="contract-dialog-title">
+          <div class="dialog-heading"><div><h2 id="contract-dialog-title">{{ contractMode === 'create' ? 'Thêm hợp đồng mới' : 'Cập nhật hợp đồng' }}</h2><p>{{ contractMode === 'create' ? 'Nhập thông tin sinh viên, phương tiện và thời hạn gửi xe.' : 'Thông tin sinh viên được cập nhật cho các hợp đồng khác của cùng sinh viên.' }}</p></div><button class="dialog-close" type="button" @click="closeContractDialog">Đóng</button></div>
+          <div v-if="contractLoading" class="loading">Đang tải thông tin hợp đồng…</div>
+          <form v-else class="contract-form" @submit.prevent="saveContract">
+            <div class="contract-fields">
+              <div><label for="contract-student-code">Mã sinh viên</label><input id="contract-student-code" v-model.trim="contractForm.studentCode" required maxlength="32" :readonly="contractMode === 'edit'" autocomplete="off" placeholder="Ví dụ: SV2026001"></div>
+              <div><label for="contract-full-name">Họ và tên</label><input id="contract-full-name" v-model.trim="contractForm.fullName" required minlength="1" maxlength="150" autocomplete="name"></div>
+              <div><label for="contract-room">Phòng</label><input id="contract-room" v-model.trim="contractForm.roomNumber" required maxlength="30" placeholder="Ví dụ: A203"></div>
+              <div><label for="contract-phone">{{ contractMode === 'edit' ? 'Số điện thoại (để trống để giữ nguyên)' : 'Số điện thoại (không bắt buộc)' }}</label><input id="contract-phone" v-model.trim="contractForm.phoneNumber" maxlength="40" autocomplete="tel" placeholder="Số liên hệ sinh viên"></div>
+              <div><label for="contract-plate">Biển số xe</label><input id="contract-plate" v-model.trim="contractForm.licensePlate" required maxlength="20" :readonly="contractMode === 'edit'" autocomplete="off" placeholder="Ví dụ: 59A12345"></div>
+              <div><label for="contract-start-date">Ngày bắt đầu</label><input id="contract-start-date" v-model="contractForm.startDate" type="date" required></div>
+              <div><label for="contract-end-date">Ngày hết hạn</label><input id="contract-end-date" v-model="contractForm.endDate" type="date" required :min="contractForm.startDate"></div>
+              <div v-if="contractMode === 'edit'" class="form-hint">Muốn đổi biển số, dùng nút “Đổi xe” để ghi nhận lý do và lịch sử thay đổi.</div>
+            </div>
+            <div v-if="contractError" class="account-error contract-error" role="alert">{{ contractError }}</div>
+            <div class="contract-actions"><button type="button" class="dialog-close" @click="closeContractDialog">Hủy</button><button type="submit" class="primary-button" :disabled="contractBusy">{{ contractBusy ? 'Đang lưu…' : contractMode === 'create' ? 'Tạo hợp đồng' : 'Lưu cập nhật' }}</button></div>
+          </form>
+        </section>
+      </div>
+      <div v-if="showVehicleDialog" class="dialog-backdrop" @click.self="closeVehicleDialog">
+        <section class="account-dialog contract-dialog" role="dialog" aria-modal="true" aria-labelledby="vehicle-dialog-title">
+          <div class="dialog-heading"><div><h2 id="vehicle-dialog-title">Đổi xe</h2><p>{{ vehicleChangeContract ? `${vehicleChangeContract.fullName} · ${vehicleChangeContract.studentCode}` : '' }}</p></div><button class="dialog-close" type="button" @click="closeVehicleDialog">Đóng</button></div>
+          <form class="vehicle-form" @submit.prevent="saveVehicleChange">
+            <div><label for="old-license-plate">Biển số hiện tại</label><input id="old-license-plate" :value="vehicleChangeContract?.licensePlate || ''" readonly></div>
+            <div><label for="new-license-plate">Biển số mới</label><input id="new-license-plate" v-model.trim="vehicleChangeForm.licensePlate" required maxlength="20" autocomplete="off" placeholder="Nhập biển số mới"></div>
+            <div><label for="vehicle-change-note">Lý do đổi xe</label><textarea id="vehicle-change-note" v-model.trim="vehicleChangeForm.changeNote" maxlength="500" placeholder="Ghi chú để tra cứu lịch sử sau này"></textarea></div>
+            <div v-if="contractError" class="account-error contract-error" role="alert">{{ contractError }}</div>
+            <div class="contract-actions"><button type="button" class="dialog-close" @click="closeVehicleDialog">Hủy</button><button type="submit" class="primary-button" :disabled="contractBusy">{{ contractBusy ? 'Đang lưu…' : 'Lưu thay đổi xe' }}</button></div>
+          </form>
+        </section>
+      </div>
+      <div v-if="showAccounts" class="dialog-backdrop" @click.self="closeAccounts">
+        <section class="account-dialog" role="dialog" aria-modal="true" aria-labelledby="accounts-title">
+          <div class="dialog-heading"><div><h2 id="accounts-title">Tài khoản nhân viên</h2><p>Quản lý trong phạm vi {{ currentUser.schoolName }} ({{ schoolCode }}).</p></div><button class="dialog-close" @click="closeAccounts">Đóng</button></div>
+          <form class="account-form" @submit.prevent="issueStaffInvitation">
+            <div><label for="invite-role">Vai trò mời</label><select id="invite-role" v-model="newStaffRole"><option value="Staff">Nhân viên</option><option value="Guard">Bảo vệ</option><option v-if="currentUser.role==='Admin'" value="Manager">Quản sinh</option></select></div>
+            <div><label>Quyền</label><div style="font-size:12px;color:#687586;padding:10px 0">{{ newStaffRole==='Manager' ? 'Quản lý tài khoản và hợp đồng' : 'Phạm vi trường hiện tại' }}</div></div>
+            <button class="small-submit" type="submit" :disabled="staffBusy">Tạo lời mời</button>
+          </form>
+          <div v-if="issuedInviteUrl" class="invite-result"><strong>Link mời một lần · hạn {{ formatDate(issuedInviteExpiresAt) }}</strong><br>{{ issuedInviteUrl }}<button type="button" @click="copyInvite">Sao chép</button></div>
+          <div v-if="staffError" class="account-error" role="alert">{{ staffError }}</div>
+          <div v-if="staffBusy" class="loading">Đang tải tài khoản…</div>
+          <div v-else class="table-wrap account-table"><table><thead><tr><th>Tên đăng nhập</th><th>Vai trò</th><th>Trạng thái</th><th>Đăng nhập gần nhất</th><th></th></tr></thead><tbody><tr v-for="staff in staffUsers" :key="staff.staffUserId"><td>{{ staff.username }}</td><td>{{ roleLabel(staff.role) }}</td><td>{{ staff.isActive ? 'Hoạt động' : 'Đã khóa' }}</td><td>{{ staff.lastLoginAtUtc ? new Date(staff.lastLoginAtUtc).toLocaleString('vi-VN') : 'Chưa đăng nhập' }}</td><td><button v-if="staff.username !== currentUser.username" class="page-btn" @click="setStaffActive(staff)">{{ staff.isActive ? 'Khóa' : 'Mở khóa' }}</button></td></tr></tbody></table></div>
+          <div v-if="staffInvitations.some(invitation => !invitation.isAccepted && !invitation.isRevoked && !invitation.isExpired)" style="margin-top:16px"><div class="panel-title">Lời mời đang chờ</div><div v-for="invitation in staffInvitations.filter(item => !item.isAccepted && !item.isRevoked && !item.isExpired)" :key="invitation.invitationId" class="panel-caption" style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eef1f4">{{ roleLabel(invitation.role) }} · hết hạn {{ new Date(invitation.expiresAtUtc).toLocaleString('vi-VN') }} <button class="page-btn" @click="revokeInvitation(invitation)">Thu hồi</button></div></div>
+          <div v-if="staffAudit.length" style="margin-top:16px"><div class="panel-title">Nhật ký tài khoản</div><div v-for="event in staffAudit.slice(0,10)" :key="event.accountAuditLogId" class="panel-caption" style="padding:7px 0;border-bottom:1px solid #eef1f4">{{ new Date(event.createdAtUtc).toLocaleString('vi-VN') }} · {{ event.action }}<span v-if="event.targetUsername"> · {{ event.targetUsername }}</span></div></div>
+        </section>
+      </div>
+      <div v-if="showHistoryDialog" class="dialog-backdrop" @click.self="closeHistoryDialog">
+        <section class="account-dialog contract-dialog" role="dialog" aria-modal="true" aria-labelledby="history-dialog-title">
+          <div class="dialog-heading">
+            <div>
+              <h2 id="history-dialog-title">Lịch sử hợp đồng</h2>
+              <p v-if="historyContract">{{ historyContract.fullName }} · {{ historyContract.studentCode }} · {{ historyContract.licensePlate }}</p>
+            </div>
+            <button class="dialog-close" type="button" @click="closeHistoryDialog">Đóng</button>
+          </div>
+          <div v-if="historyError" class="error history-error" role="alert">{{ historyError }}</div>
+          <div v-if="historyLoading" class="loading">Đang tải lịch sử…</div>
+          <div v-else-if="!historyError && contractHistory.length === 0" class="empty"><strong>Chưa có lịch sử thay đổi</strong>Các thay đổi được lưu kể từ khi có nhật ký hợp đồng.</div>
+          <ol v-else-if="!historyError" class="history-list">
+            <li v-for="(event, index) in contractHistory" :key="`${event.changedAt}-${index}`" class="history-entry">
+              <div class="history-entry-head">
+                <span class="history-entry-title">{{ historyActionLabel(event.action) }}</span>
+                <time class="history-entry-time">{{ new Date(event.changedAt).toLocaleString('vi-VN') }}</time>
+              </div>
+              <div class="history-entry-actor">Người thực hiện: {{ event.changedBy || 'Không xác định' }}</div>
+              <div class="history-entry-details">{{ event.details || 'Không có chi tiết thay đổi.' }}</div>
+            </li>
+          </ol>
+        </section>
+      </div>
+      <div class="heading">
+        <div><div class="eyebrow">Tổng quan bãi xe</div><h1>Quản lý gửi xe tháng</h1><p>Theo dõi hợp đồng và thời hạn gửi xe tại ký túc xá.</p></div>
+        <div class="today">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>
+          {{ currentDate }}
+        </div>
+      </div>
+
+      <section class="stats" aria-label="Thống kê hợp đồng">
+        <button class="stat-card green" :class="{selected: statusFilter === 'active'}" @click="setStatus('active')" aria-label="Lọc hợp đồng đang hoạt động">
+          <div class="stat-top"><span class="stat-label">Đang hoạt động</span><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13.5 9.2 18 19 6"/><circle cx="12" cy="12" r="9"/></svg></span></div>
+          <div class="stat-value">{{ number(stats.activeCount) }}</div><div class="stat-foot">Hợp đồng còn hiệu lực</div>
+        </button>
+        <button class="stat-card amber" :class="{selected: statusFilter === 'expiring'}" @click="setStatus('expiring')" aria-label="Lọc hợp đồng sắp hết hạn">
+          <div class="stat-top"><span class="stat-label">Sắp hết hạn</span><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span></div>
+          <div class="stat-value">{{ number(stats.expiringSoonCount) }}</div><div class="stat-foot">Còn từ 0 đến 3 ngày</div>
+        </button>
+        <button class="stat-card red" :class="{selected: statusFilter === 'expired'}" @click="setStatus('expired')" aria-label="Lọc hợp đồng đã hết hạn">
+          <div class="stat-top"><span class="stat-label">Đã hết hạn</span><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m8 8 8 8m0-8-8 8"/><circle cx="12" cy="12" r="9"/></svg></span></div>
+          <div class="stat-value">{{ number(stats.expiredCount) }}</div><div class="stat-foot">Cần kiểm tra gia hạn</div>
+        </button>
+      </section>
+
+      <section class="panel" aria-label="Danh sách hợp đồng">
+        <div class="panel-head">
+          <div><div class="panel-title">Danh sách hợp đồng</div><div class="panel-caption">Tra cứu theo biển số, sinh viên hoặc phòng</div></div>
+          <div class="tools">
+            <button v-if="canManageContracts" class="primary-button" @click="openCreateContract">+ Thêm hợp đồng</button>
+            <label class="search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>
+              <input v-model="searchInput" @input="onSearchInput" type="search" placeholder="Tìm biển số, tên, mã SV, phòng..." aria-label="Tìm hợp đồng" autocomplete="off">
+            </label>
+            <select class="filter" v-model="statusFilter" @change="loadContracts(1)" aria-label="Lọc trạng thái">
+              <option value="all">Tất cả trạng thái</option><option value="active">Đang hoạt động</option><option value="pending">Chưa hiệu lực</option><option value="expiring">Sắp hết hạn</option><option value="expired">Đã hết hạn</option><option value="cancelled">Đã hủy</option>
+            </select>
+            <button class="icon-button" :class="{spinning: loading}" @click="refresh" :disabled="loading" aria-label="Làm mới danh sách" title="Làm mới">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9A7 7 0 0 1 18 6l2 1M4 17l2 .9A7 7 0 0 0 18.4 15"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div v-if="error" class="error" role="alert">{{ error }}</div>
+        <div v-else-if="loading && items.length === 0" class="loading">Đang tải dữ liệu hợp đồng…</div>
+        <div v-else-if="items.length === 0" class="empty"><strong>Chưa tìm thấy hợp đồng</strong>Thử thay đổi từ khóa hoặc bộ lọc trạng thái.</div>
+        <div v-else class="table-wrap">
+          <table>
+            <thead><tr><th>Biển số xe</th><th>Sinh viên</th><th>Phòng</th><th>Ngày bắt đầu</th><th>Ngày hết hạn</th><th>Trạng thái</th><th class="actions-heading">Thao tác</th></tr></thead>
+            <tbody>
+              <tr v-for="contract in items" :key="contract.contractId">
+                <td><span class="plate">{{ contract.licensePlate }}</span></td>
+                <td><div class="student-name">{{ contract.fullName }}</div><div class="student-code">{{ contract.studentCode }}</div></td>
+                <td><span class="room">{{ contract.roomNumber }}</span></td>
+                <td class="date">{{ formatDate(contract.startDate) }}</td>
+                <td><div class="date expiry" :class="{'muted': contract.status === 'Cancelled'}">{{ formatDate(contract.endDate) }}</div><div v-if="contract.status !== 'Cancelled'" class="student-code">{{ expiryText(contract) }}</div></td>
+                <td><span class="status" :class="statusClass(contract.status)"><span class="status-dot"></span>{{ statusLabel(contract.status) }}</span></td>
+                <td><div class="table-actions"><button v-if="canManageContracts && contract.status !== 'Cancelled'" class="table-action" type="button" @click="openEditContract(contract)">Sửa</button><button v-if="canManageContracts && ['Active','ExpiringSoon','Pending'].includes(contract.status)" class="table-action" type="button" @click="openVehicleDialog(contract)">Đổi xe</button><button v-if="canManageContracts && ['Active','ExpiringSoon','Pending'].includes(contract.status)" class="table-action danger" type="button" @click="cancelContract(contract)">Hủy</button><button class="table-action" type="button" @click.stop="viewHistory(contract)">Lịch sử</button></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <footer class="panel-foot">
+          <span>{{ rangeLabel }}</span>
+          <div class="pager">
+            <button class="page-btn" @click="loadContracts(page - 1)" :disabled="page <= 1 || loading" aria-label="Trang trước"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></button>
+            <span class="page-info">Trang {{ page }} / {{ totalPages || 1 }}</span>
+            <button class="page-btn" @click="loadContracts(page + 1)" :disabled="page >= totalPages || loading" aria-label="Trang sau"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></button>
+          </div>
+        </footer>
+      </section>
+      <div class="footnote">Monthly Parking System <span aria-hidden="true">·</span> Quản lý nội bộ ký túc xá</div>
+    </main>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE_URL = window.location.protocol === 'file:' ? 'http://localhost:5127' : window.location.origin;
+    const { createApp } = Vue;
+
+    createApp({
+      data() {
+        return {
+          items: [], stats: { activeCount: 0, expiringSoonCount: 0, expiredCount: 0 },
+          page: 1, pageSize: 10, totalCount: 0, totalPages: 0,
+          searchInput: '', search: '', statusFilter: 'all', loading: false, error: '', debounceTimer: null, refreshTimer: null,
+          authToken: '', currentUser: { username: '', role: '', schoolName: '' }, loginUsername: '', loginPassword: '', authError: '', authBusy: false,
+          schoolCode: new URLSearchParams(window.location.search).get('school') || localStorage.getItem('mps-school-code') || 'MPS-DEFAULT',
+          invitationToken: new URLSearchParams(window.location.hash.slice(1)).get('invite') || new URLSearchParams(window.location.search).get('invite') || '', inviteUsername: '', invitePassword: '',
+          showAccounts: false, staffBusy: false, staffError: '', staffUsers: [], staffInvitations: [], staffAudit: [], newStaffRole: 'Staff',
+          issuedInviteUrl: '', issuedInviteExpiresAt: '',
+          showContractDialog: false, showVehicleDialog: false, showHistoryDialog: false, contractMode: 'create', contractId: null,
+          contractBusy: false, contractLoading: false, contractError: '',
+          historyContract: null, contractHistory: [], historyLoading: false, historyError: '',
+          contractForm: { studentCode: '', fullName: '', roomNumber: '', phoneNumber: '', licensePlate: '', startDate: '', endDate: '' },
+          vehicleChangeContract: null, vehicleChangeForm: { licensePlate: '', changeNote: '' },
+          registrationUrl: window.location.protocol === 'file:' ? 'http://localhost:5127/register' : '/register',
+          theme: localStorage.getItem('theme') || 'light',
+          currentDate: new Intl.DateTimeFormat('vi-VN', { dateStyle: 'full' }).format(new Date())
+        };
+      },
+      computed: {
+        canManageStaff() { return ['Admin', 'Manager'].includes(this.currentUser.role); },
+        canManageContracts() { return ['Admin', 'Manager'].includes(this.currentUser.role); },
+        rangeLabel() {
+          if (!this.totalCount) return 'Không có hợp đồng';
+          const first = (this.page - 1) * this.pageSize + 1;
+          return `Hiển thị ${first}–${Math.min(this.page * this.pageSize, this.totalCount)} trong ${this.number(this.totalCount)} hợp đồng`;
+        }
+      },
+      methods: {
+        toggleTheme() {
+          this.theme = this.theme === 'light' ? 'dark' : 'light';
+          if (this.theme === 'dark') document.documentElement.classList.add('dark');
+          else document.documentElement.classList.remove('dark');
+          localStorage.setItem('theme', this.theme);
+        },
+        async loadContracts(page = this.page) {
+          if (!this.authToken) return;
+          this.page = page;
+          this.loading = true;
+          this.error = '';
+          const params = new URLSearchParams({ page: String(this.page), pageSize: String(this.pageSize), status: this.statusFilter });
+          if (this.search) params.set('search', this.search);
+          try {
+            const response = await fetch(`${API_BASE_URL}/api/v1/contracts/expiring?${params}`, { headers: { Authorization: `Bearer ${this.authToken}` } });
+            if (response.status === 401) {
+              this.logout();
+              this.authError = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+              return;
+            }
+            if (!response.ok) throw new Error(response.status === 404 ? 'Không tìm thấy API dashboard. Hãy kiểm tra backend đang chạy.' : `Không thể tải dữ liệu (HTTP ${response.status}).`);
+            const data = await response.json();
+            this.items = data.items || [];
+            this.stats = data.stats || this.stats;
+            this.page = data.page || 1;
+            this.pageSize = data.pageSize || this.pageSize;
+            this.totalCount = data.totalCount || 0;
+            this.totalPages = data.totalPages || 0;
+          } catch (error) {
+            this.error = error instanceof TypeError ? 'Không kết nối được API. Hãy chạy backend tại http://localhost:5127.' : error.message;
+          } finally {
+            this.loading = false;
+          }
+        },
+        refresh() { this.loadContracts(this.page); },
+        async login() {
+          this.authBusy = true; this.authError = '';
+          try {
+            const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ schoolCode: this.schoolCode.trim(), username: this.loginUsername, password: this.loginPassword })
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.message || data.title || 'Không đăng nhập được. Kiểm tra mã trường, tên đăng nhập và mật khẩu.');
+            this.acceptLogin(data);
+          } catch (error) {
+            this.authError = error instanceof TypeError ? 'Không kết nối được API tại http://localhost:5127.' : error.message;
+          } finally { this.authBusy = false; }
+        },
+        async acceptInvitation() {
+          if (!this.inviteUsername || !this.invitePassword) return;
+          this.authBusy = true; this.authError = '';
+          try {
+            const response = await fetch(`${API_BASE_URL}/api/v1/auth/accept-invitation`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ token: this.invitationToken, username: this.inviteUsername, password: this.invitePassword })
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.detail || data.message || data.title || `Không thể kích hoạt tài khoản (HTTP ${response.status}).`);
+            this.invitationToken = '';
+            this.invitePassword = '';
+            try { history.replaceState({}, document.title, window.location.pathname); } catch { }
+            this.acceptLogin(data);
+          } catch (error) {
+            this.authError = error instanceof TypeError ? 'Không kết nối được API tại http://localhost:5127.' : error.message;
+          } finally { this.authBusy = false; }
+        },
+        acceptLogin(data) {
+          this.authToken = data.accessToken;
+          this.schoolCode = data.schoolCode;
+          localStorage.setItem('mps-school-code', data.schoolCode);
+          this.currentUser = { username: data.username, role: data.role, schoolName: data.schoolName };
+          this.loginPassword = '';
+          clearInterval(this.refreshTimer);
+          this.loadContracts(1);
+          this.refreshTimer = setInterval(() => { if (!this.loading) this.refresh(); }, 60000);
+        },
+        logout() {
+          clearInterval(this.refreshTimer); this.authToken = ''; this.currentUser = { username: '', role: '' };
+          this.items = []; this.stats = { activeCount: 0, expiringSoonCount: 0, expiredCount: 0 };
+          this.totalCount = 0; this.totalPages = 0;
+        },
+        localDateInput(date) {
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          return `${date.getFullYear()}-${month}-${day}`;
+        },
+        dateInput(value) { return value ? String(value).slice(0, 10) : ''; },
+        async responseError(response, fallback) {
+          const body = await response.text().catch(() => '');
+          if (body) {
+            try {
+              const data = JSON.parse(body);
+              if (typeof data === 'string') return data;
+              if (data.detail || data.title || data.message) return data.detail || data.title || data.message;
+            } catch { return body; }
+          }
+          return `${fallback} (HTTP ${response.status}).`;
+        },
+        openCreateContract() {
+          const start = new Date();
+          const end = new Date(start);
+          end.setDate(end.getDate() + 30);
+          this.contractMode = 'create'; this.contractId = null; this.contractError = '';
+          this.contractForm = { studentCode: '', fullName: '', roomNumber: '', phoneNumber: '', licensePlate: '', startDate: this.localDateInput(start), endDate: this.localDateInput(end) };
+          this.contractLoading = false; this.showContractDialog = true;
+        },
+        async openEditContract(contract) {
+          this.contractMode = 'edit'; this.contractId = contract.contractId; this.contractError = '';
+          this.contractForm = {
+            studentCode: contract.studentCode, fullName: contract.fullName, roomNumber: contract.roomNumber,
+            phoneNumber: '', licensePlate: contract.licensePlate,
+            startDate: this.dateInput(contract.startDate), endDate: this.dateInput(contract.endDate)
+          };
+          this.showContractDialog = true; this.contractLoading = true;
+          try {
+            const response = await fetch(`${API_BASE_URL}/api/v1/contracts/${this.contractId}`, { headers: { Authorization: `Bearer ${this.authToken}` } });
+            if (response.status === 401) { this.logout(); this.authError = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'; return; }
+            if (!response.ok) throw new Error(await this.responseError(response, 'Không tải được hợp đồng'));
+            const data = await response.json();
+            this.contractForm.phoneNumber = data.phoneNumber || '';
+          } catch (error) {
+            this.contractError = error instanceof TypeError ? 'Không kết nối được API.' : error.message;
+          } finally { this.contractLoading = false; }
+        },
+        closeContractDialog() { this.showContractDialog = false; this.contractError = ''; this.contractBusy = false; },
+        async saveContract() {
+          if (!this.canManageContracts || this.contractBusy) return;
+          if (this.contractForm.endDate < this.contractForm.startDate) {
+            this.contractError = 'Ngày hết hạn phải bằng hoặc sau ngày bắt đầu.';
+            return;
+          }
+          this.contractBusy = true; this.contractError = '';
+          const payload = {
+            studentCode: this.contractForm.studentCode.trim(), fullName: this.contractForm.fullName.trim(),
+            roomNumber: this.contractForm.roomNumber.trim(), phoneNumber: this.contractForm.phoneNumber.trim() || null,
+            licensePlate: this.contractForm.licensePlate.trim(), startDate: this.contractForm.startDate, endDate: this.contractForm.endDate
+          };
+          const creating = this.contractMode === 'create';
+          const url = creating ? `${API_BASE_URL}/api/v1/contracts` : `${API_BASE_URL}/api/v1/contracts/${this.contractId}`;
+          try {
+            const response = await fetch(url, {
+              method: creating ? 'POST' : 'PUT',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.authToken}` },
+              body: JSON.stringify(payload)
+            });
+            if (response.status === 401) { this.logout(); this.authError = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'; return; }
+            if (!response.ok) throw new Error(await this.responseError(response, creating ? 'Không tạo được hợp đồng' : 'Không cập nhật được hợp đồng'));
+            this.closeContractDialog();
+            if (creating) { this.searchInput = ''; this.search = ''; this.statusFilter = 'all'; await this.loadContracts(1); }
+            else await this.loadContracts(this.page);
+          } catch (error) {
+            this.contractError = error instanceof TypeError ? 'Không kết nối được API.' : error.message;
+          } finally { this.contractBusy = false; }
+        },
+        openVehicleDialog(contract) {
+          this.vehicleChangeContract = contract; this.vehicleChangeForm = { licensePlate: '', changeNote: '' };
+          this.contractError = ''; this.contractBusy = false; this.showVehicleDialog = true;
+        },
+        closeVehicleDialog() { this.showVehicleDialog = false; this.contractError = ''; this.contractBusy = false; },
+        async viewHistory(contract) {
+          this.historyContract = contract;
+          this.contractHistory = [];
+          this.historyError = '';
+          this.historyLoading = true;
+          this.showHistoryDialog = true;
+          try {
+            const response = await fetch(`${API_BASE_URL}/api/v1/contracts/${contract.contractId}/history`, {
+              headers: { Authorization: `Bearer ${this.authToken}` }
+            });
+            if (response.status === 401) throw new Error('Phiên đăng nhập hoặc tài khoản không còn hiệu lực. Hãy đăng xuất rồi đăng nhập lại để xem lịch sử.');
+            if (!response.ok) throw new Error(await this.responseError(response, 'Không tải được lịch sử hợp đồng'));
+            this.contractHistory = await response.json();
+          } catch (error) {
+            this.historyError = error instanceof TypeError ? 'Không kết nối được API.' : error.message;
+          } finally {
+            this.historyLoading = false;
+          }
+        },
+        closeHistoryDialog() {
+          this.showHistoryDialog = false;
+          this.historyContract = null;
+          this.contractHistory = [];
+          this.historyError = '';
+          this.historyLoading = false;
+        },
+        historyActionLabel(action) {
+          return ({ Create: 'Tạo hợp đồng', Update: 'Cập nhật hợp đồng', ChangeVehicle: 'Đổi xe', Cancel: 'Hủy hợp đồng' })[action] || action || 'Thay đổi';
+        },
+        async saveVehicleChange() {
+          if (!this.canManageContracts || this.contractBusy || !this.vehicleChangeContract) return;
+          if (this.vehicleChangeForm.licensePlate.trim().toUpperCase() === this.vehicleChangeContract.licensePlate.toUpperCase()) {
+            this.contractError = 'Biển số mới phải khác biển số hiện tại.';
+            return;
+          }
+          this.contractBusy = true; this.contractError = '';
+          try {
+            const response = await fetch(`${API_BASE_URL}/api/v1/contracts/${this.vehicleChangeContract.contractId}/change-vehicle`, {
+              method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.authToken}` },
+              body: JSON.stringify({ licensePlate: this.vehicleChangeForm.licensePlate.trim(), changeNote: this.vehicleChangeForm.changeNote.trim() || null })
+            });
+            if (response.status === 401) { this.logout(); this.authError = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'; return; }
+            if (!response.ok) throw new Error(await this.responseError(response, 'Không đổi được biển số'));
+            this.closeVehicleDialog();
+            await this.loadContracts(this.page);
+          } catch (error) {
+            this.contractError = error instanceof TypeError ? 'Không kết nối được API.' : error.message;
+          } finally { this.contractBusy = false; }
+        },
+        async cancelContract(contract) {
+          if (!this.canManageContracts || !['Active', 'ExpiringSoon'].includes(contract.status)) return;
+          if (!window.confirm(`Hủy hợp đồng của ${contract.fullName} (${contract.licensePlate})?`)) return;
+          this.loading = true; this.error = '';
+          try {
+            const response = await fetch(`${API_BASE_URL}/api/v1/contracts/${contract.contractId}/cancel`, {
+              method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.authToken}` },
+              body: JSON.stringify({ cancellationNote: 'Hủy từ màn hình quản lý hợp đồng.' })
+            });
+            if (response.status === 401) { this.logout(); this.authError = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'; return; }
+            if (!response.ok) throw new Error(await this.responseError(response, 'Không hủy được hợp đồng'));
+            await this.loadContracts(this.page);
+          } catch (error) {
+            this.error = error instanceof TypeError ? 'Không kết nối được API.' : error.message;
+          } finally { this.loading = false; }
+        },
+        async openAccounts() {
+          this.showAccounts = true;
+          this.issuedInviteUrl = '';
+          await this.loadStaff();
+        },
+        closeAccounts() { this.showAccounts = false; this.staffError = ''; },
+        async loadStaff() {
+          this.staffBusy = true; this.staffError = '';
+          try {
+            const headers = { Authorization: `Bearer ${this.authToken}` };
+            const [usersResponse, invitationsResponse, auditResponse] = await Promise.all([
+              fetch(`${API_BASE_URL}/api/v1/auth/staff`, { headers }),
+              fetch(`${API_BASE_URL}/api/v1/auth/staff/invitations`, { headers }),
+              fetch(`${API_BASE_URL}/api/v1/auth/account-audit`, { headers })
+            ]);
+            if (!usersResponse.ok || !invitationsResponse.ok || !auditResponse.ok) throw new Error(`Không thể tải tài khoản/nhật ký (HTTP ${usersResponse.status}/${invitationsResponse.status}/${auditResponse.status}).`);
+            this.staffUsers = await usersResponse.json();
+            this.staffInvitations = await invitationsResponse.json();
+            this.staffAudit = await auditResponse.json();
+          } catch (error) {
+            this.staffError = error instanceof TypeError ? 'Không kết nối được API.' : error.message;
+          } finally { this.staffBusy = false; }
+        },
+        async issueStaffInvitation() {
+          this.staffBusy = true; this.staffError = ''; this.issuedInviteUrl = '';
+          try {
+            const response = await fetch(`${API_BASE_URL}/api/v1/auth/staff/invitations`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.authToken}` },
+              body: JSON.stringify({ role: this.newStaffRole })
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.detail || data.message || data.title || `Không tạo được lời mời (HTTP ${response.status}).`);
+            this.issuedInviteUrl = `${API_BASE_URL}/#invite=${encodeURIComponent(data.token)}`;
+            this.issuedInviteExpiresAt = data.expiresAtUtc;
+            await this.loadStaff();
+          } catch (error) {
+            this.staffError = error instanceof TypeError ? 'Không kết nối được API.' : error.message;
+          } finally { this.staffBusy = false; }
+        },
+        async copyInvite() {
+          try { await navigator.clipboard.writeText(this.issuedInviteUrl); }
+          catch { window.prompt('Sao chép link lời mời:', this.issuedInviteUrl); }
+        },
+        async revokeInvitation(invitation) {
+          this.staffBusy = true; this.staffError = '';
+          try {
+            const response = await fetch(`${API_BASE_URL}/api/v1/auth/staff/invitations/${invitation.invitationId}`, {
+              method: 'DELETE', headers: { Authorization: `Bearer ${this.authToken}` }
+            });
+            if (!response.ok) throw new Error(`Không thu hồi được lời mời (HTTP ${response.status}).`);
+            await this.loadStaff();
+          } catch (error) {
+            this.staffError = error instanceof TypeError ? 'Không kết nối được API.' : error.message;
+          } finally { this.staffBusy = false; }
+        },
+        async setStaffActive(staff) {
+          this.staffBusy = true; this.staffError = '';
+          try {
+            const response = await fetch(`${API_BASE_URL}/api/v1/auth/staff/${staff.staffUserId}/active`, {
+              method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.authToken}` },
+              body: JSON.stringify({ isActive: !staff.isActive })
+            });
+            if (!response.ok) throw new Error(`Không cập nhật được tài khoản (HTTP ${response.status}).`);
+            await this.loadStaff();
+          } catch (error) {
+            this.staffError = error instanceof TypeError ? 'Không kết nối được API.' : error.message;
+          } finally { this.staffBusy = false; }
+        },
+        roleLabel(role) { return ({ Admin: 'Quản trị trường', Manager: 'Quản sinh', Guard: 'Bảo vệ', Staff: 'Nhân viên' })[role] || role; },
+        onSearchInput() {
+          clearTimeout(this.debounceTimer);
+          this.debounceTimer = setTimeout(() => { this.search = this.searchInput.trim(); this.loadContracts(1); }, 320);
+        },
+        setStatus(status) {
+          this.statusFilter = this.statusFilter === status ? 'all' : status;
+          this.loadContracts(1);
+        },
+        number(value) { return new Intl.NumberFormat('vi-VN').format(value || 0); },
+        formatDate(value) {
+          if (!value) return '—';
+          const date = value.includes('T') ? new Date(value) : new Date(`${value}T00:00:00`);
+          return new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date);
+        },
+        dayDifference(value) {
+          const target = new Date(`${value}T00:00:00`);
+          const now = new Date(); now.setHours(0, 0, 0, 0);
+          return Math.round((target - now) / 86400000);
+        },
+        expiryText(contract) {
+          const days = this.dayDifference(contract.endDate);
+          if (contract.status === 'Expired') return `Quá hạn ${Math.max(1, Math.abs(days))} ngày`;
+          if (contract.status === 'ExpiringSoon') return days === 0 ? 'Hết hạn hôm nay' : `Còn ${days} ngày`;
+          return contract.status === 'Cancelled' ? '' : contract.status === 'Pending' ? 'Chưa tới hạn' : 'Còn hiệu lực';
+        },
+        statusLabel(status) {
+          return ({ Active: 'Đang hoạt động', Pending: 'Chưa hiệu lực', ExpiringSoon: 'Sắp hết hạn', Expired: 'Đã hết hạn', Cancelled: 'Đã hủy' })[status] || status;
+        },
+        statusClass(status) {
+          return ({ Active: 'status-active', Pending: 'status-cancelled', ExpiringSoon: 'status-soon', Expired: 'status-expired', Cancelled: 'status-cancelled' })[status] || 'status-cancelled';
+        }
+      },
+      mounted() {
+        if (this.theme === 'dark') document.documentElement.classList.add('dark');
+        const schoolFromRegistration = new URLSearchParams(window.location.search).get('school');
+        if (schoolFromRegistration) { localStorage.setItem('mps-school-code', schoolFromRegistration); try { history.replaceState({}, document.title, window.location.pathname); } catch { } }
+        if (this.invitationToken) { try { history.replaceState({}, document.title, window.location.pathname); } catch { } }
+      },
+      beforeUnmount() { clearTimeout(this.debounceTimer); clearInterval(this.refreshTimer); }
+    }).mount('#app');
+  </script>
+</body>
+</html>

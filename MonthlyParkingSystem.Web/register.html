@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f7fb">
+  <title>MPS · Đăng ký trường</title>
+  <style>
+    :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#182230;background:#f5f7fb;font-synthesis:none;text-rendering:optimizeLegibility}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:22px;background:radial-gradient(ellipse at 52% 0%,#e8f1ec 0%,#f5f7fb 55%)}
+    .card{width:min(100%,510px);padding:30px;background:#fff;border:1px solid #e4eaf0;border-radius:18px;box-shadow:0 18px 55px #1e34400e}.brand{font-size:13px;font-weight:750;color:#194b3d;letter-spacing:.04em}.eyebrow{margin:24px 0 7px;font-size:11px;color:#788594;font-weight:650;letter-spacing:.06em;text-transform:uppercase}h1{margin:0;font-size:24px;letter-spacing:-.035em}p{color:#728090;font-size:13px;line-height:1.6}.hint{padding:11px 12px;border-radius:9px;background:#f4f8f5;color:#607568;font-size:12px;line-height:1.55}
+    label{display:block;margin:14px 0 7px;font-size:12px;color:#526171;font-weight:620}input{width:100%;height:42px;padding:0 12px;border:1px solid #dfe6eb;border-radius:9px;color:#263644;font-size:13px;outline:none}input:focus{border-color:#84aa98;box-shadow:0 0 0 3px #194b3d10}button{height:43px;width:100%;padding:0 16px;margin-top:20px;border:0;border-radius:9px;background:#194b3d;color:#fff;font-size:13px;font-weight:650;cursor:pointer}button:disabled{opacity:.65;cursor:wait}.error{min-height:20px;margin-top:12px;color:#b7443d;font-size:12px;line-height:1.5}.success{display:none;margin-top:18px;padding:15px;border:1px solid #d9eadf;border-radius:10px;background:#f3faf5;color:#355a46;font-size:13px;line-height:1.8;overflow-wrap:anywhere}.success a,.back{color:#194b3d}.back{display:block;margin-top:18px;color:#60706b;font-size:12px;text-align:center;text-decoration:none}.back:hover{color:#194b3d}.otp{letter-spacing:.35em;text-align:center;font-size:19px;font-weight:700}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="brand">MPS · RESIDENCE</div>
+    <div class="eyebrow">Khởi tạo trường mới</div>
+    <h1>Đăng ký sử dụng MPS</h1>
+    <p>Tạo không gian riêng cho trường và tài khoản quản trị đầu tiên. Xác minh email để hoàn tất đăng ký.</p>
+    <form id="registration-form">
+      <div id="registration-fields">
+        <label for="school-name">Tên trường</label>
+        <input id="school-name" required minlength="2" maxlength="150" autocomplete="organization" placeholder="Tên trường hoặc ký túc xá">
+        <label for="school-code">Mã trường đăng nhập</label>
+        <input id="school-code" required minlength="3" maxlength="32" pattern="[A-Za-z0-9-]+" autocomplete="off" placeholder="Ví dụ: ABC-COLLEGE">
+        <label for="email">Email người quản lý</label>
+        <input id="email" type="email" required maxlength="320" autocomplete="email" placeholder="quanly@truong.edu.vn">
+        <label for="phone">Số điện thoại liên hệ (không bắt buộc)</label>
+        <input id="phone" type="tel" maxlength="24" autocomplete="tel" placeholder="0912345678 hoặc +84912345678">
+        <label for="username">Tên đăng nhập quản trị</label>
+        <input id="username" required minlength="3" maxlength="64" pattern="[A-Za-z0-9._-]+" autocomplete="username" placeholder="Tên đăng nhập">
+        <label for="password">Mật khẩu</label>
+        <input id="password" type="password" required minlength="12" maxlength="128" autocomplete="new-password" placeholder="Tối thiểu 12 ký tự">
+        <label for="password-confirm">Nhập lại mật khẩu</label>
+        <input id="password-confirm" type="password" required minlength="12" maxlength="128" autocomplete="new-password" placeholder="Nhập lại mật khẩu">
+        <div class="hint" style="margin-top:14px">Mã OTP sẽ được gửi đến email người quản lý, có hiệu lực 5 phút và chỉ có thể yêu cầu tối đa 3 lần mỗi giờ.</div>
+        <button id="send-button" type="submit">Gửi mã xác minh email</button>
+      </div>
+      <div id="otp-fields" hidden>
+        <div class="hint">Mã xác minh đã được gửi đến email đã đăng ký. Không chia sẻ mã này cho người khác.</div>
+        <label for="otp">Mã OTP gồm 6 chữ số</label>
+        <input id="otp" class="otp" inputmode="numeric" autocomplete="one-time-code" required pattern="[0-9]{6}" minlength="6" maxlength="6" placeholder="••••••" disabled>
+        <button id="verify-button" type="submit" disabled>Xác minh và tạo tài khoản</button>
+        <button id="restart-button" type="button" style="margin-top:10px;background:#eef3f0;color:#385748">Bắt đầu lại</button>
+      </div>
+    </form>
+    <div id="message" class="error" role="alert"></div>
+    <div id="success" class="success" role="status"></div>
+    <a class="back" id="back-link" href="/">← Quay lại đăng nhập</a>
+  </main>
+  <script>
+    const API_BASE_URL = window.location.protocol === 'file:' ? 'http://localhost:5127' : window.location.origin;
+    const form = document.querySelector('#registration-form');
+    const registrationFields = document.querySelector('#registration-fields');
+    const otpFields = document.querySelector('#otp-fields');
+    const message = document.querySelector('#message');
+    const success = document.querySelector('#success');
+    const sendButton = document.querySelector('#send-button');
+    const verifyButton = document.querySelector('#verify-button');
+    const backLink = document.querySelector('#back-link');
+    backLink.href = API_BASE_URL + '/';
+    let registrationId = '';
+    let busy = false;
+
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      if (busy) return;
+      message.textContent = '';
+      success.style.display = 'none';
+      if (otpFields.hidden) await sendOtp();
+      else await verifyOtp();
+    });
+
+    async function sendOtp() {
+      const password = document.querySelector('#password').value;
+      if (password !== document.querySelector('#password-confirm').value) {
+        message.textContent = 'Hai lần nhập mật khẩu chưa khớp.';
+        return;
+      }
+      busy = true; sendButton.disabled = true; sendButton.textContent = 'Đang gửi mã…';
+      const payload = {
+        schoolName: document.querySelector('#school-name').value.trim(),
+        schoolCode: document.querySelector('#school-code').value.trim(),
+        emailAddress: document.querySelector('#email').value.trim(),
+        phoneNumber: document.querySelector('#phone').value.trim(),
+        username: document.querySelector('#username').value.trim(),
+        password
+      };
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/public/school-registrations/send-otp`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.detail || data.title || data.message || `Không gửi được mã xác minh (HTTP ${response.status}).`);
+        registrationId = data.registrationId;
+        document.querySelector('#password').value = '';
+        document.querySelector('#password-confirm').value = '';
+        registrationFields.hidden = true;
+        registrationFields.querySelectorAll('input,button').forEach(control => control.disabled = true);
+        otpFields.hidden = false;
+        document.querySelector('#otp').disabled = false;
+        verifyButton.disabled = false;
+        document.querySelector('#otp').focus();
+      } catch (error) {
+        message.textContent = error instanceof TypeError ? 'Không kết nối được API.' : error.message;
+      } finally { busy = false; sendButton.disabled = false; sendButton.textContent = 'Gửi mã xác minh email'; }
+    }
+
+    async function verifyOtp() {
+      busy = true; verifyButton.disabled = true; verifyButton.textContent = 'Đang xác minh…';
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/public/school-registrations/verify-otp`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ registrationId, code: document.querySelector('#otp').value.trim() })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.detail || data.title || data.message || `Không xác minh được mã (HTTP ${response.status}).`);
+        form.hidden = true;
+        message.textContent = '';
+        const loginUrl = `${API_BASE_URL}/?school=${encodeURIComponent(data.schoolCode)}`;
+        success.innerHTML = `<strong>Đã tạo trường ${escapeHtml(data.schoolName)}.</strong><br>Mã trường đăng nhập: <strong>${escapeHtml(data.schoolCode)}</strong><br>Tài khoản quản trị: <strong>${escapeHtml(data.username)}</strong><br><a href="${loginUrl}">Đến trang đăng nhập</a>`;
+        success.style.display = 'block';
+      } catch (error) {
+        message.textContent = error instanceof TypeError ? 'Không kết nối được API.' : error.message;
+      } finally { busy = false; verifyButton.disabled = false; verifyButton.textContent = 'Xác minh và tạo tài khoản'; }
+    }
+
+    document.querySelector('#restart-button').addEventListener('click', () => window.location.reload());
+    function escapeHtml(value) { const span = document.createElement('span'); span.textContent = value || ''; return span.innerHTML; }
+  </script>
+</body>
+</html>
