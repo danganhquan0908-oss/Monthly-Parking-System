@@ -81,6 +81,14 @@ Hệ thống không tạo sẵn tài khoản đăng nhập mặc định. Tài k
 
 Các giá trị bí mật được cung cấp qua biến môi trường hoặc secret store, không lưu trực tiếp vào mã nguồn:
 
+Để cấu hình Gmail SMTP cục bộ cho OTP đăng ký trường, chạy script sau trong PowerShell ở thư mục gốc. Script yêu cầu địa chỉ gửi và nhập app password ở chế độ ẩn, sau đó lưu vào .NET User Secrets ngoài repository:
+
+```powershell
+.\Configure-Smtp.ps1
+```
+
+Backend phải chạy ở môi trường `Development` để nạp User Secrets. Cấu hình SMTP này hiện phục vụ OTP đăng ký trường; thông báo sắp hết hạn vẫn cần HTTP gateway SMS/Zalo theo luồng hiện tại.
+
 | Dịch vụ | Cấu hình chính | Mục đích |
 | --- | --- | --- |
 | Database | `ConnectionStrings__MpsDatabase` | Chuỗi kết nối SQL Server |
