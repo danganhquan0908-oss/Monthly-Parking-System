@@ -7,6 +7,7 @@ public sealed class Student
     public string StudentCode { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
     public string RoomNumber { get; set; } = string.Empty;
+    public string? EmailAddress { get; set; }
     public byte[]? PhoneEncrypted { get; set; }
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }

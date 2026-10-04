@@ -1,6 +1,7 @@
 using System.Data;
 using Microsoft.EntityFrameworkCore;
 using MonthlyParkingSystem.Api.Data;
+using MonthlyParkingSystem.Api.Domain.Contracts;
 using MonthlyParkingSystem.Api.Models;
 
 namespace MonthlyParkingSystem.Api.Services;
@@ -13,16 +14,15 @@ public sealed class DailyScanWorker(
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var channel = NormalizeChannel(configuration["MPS_NOTIFICATION_CHANNEL"] ?? configuration["Notification:Channel"]);
         while (!stoppingToken.IsCancellationRequested)
         {
             var pendingCount = 0;
             try
             {
-                var gatewayConfigured = !string.IsNullOrWhiteSpace(configuration["MPS_NOTIFICATION_ENDPOINT"]);
-                if (!gatewayConfigured)
-                    logger.LogWarning("Expiry notifications are paused until MPS_NOTIFICATION_ENDPOINT is configured.");
-                var pending = await ScanAndQueueAsync(channel, gatewayConfigured, stoppingToken);
+                var emailConfigured = IsEmailConfigured(configuration);
+                if (!emailConfigured)
+                    logger.LogWarning("Expiry email reminders are paused until SMTP email configuration is present.");
+                var pending = await ScanAndQueueAsync(emailConfigured, stoppingToken);
                 pendingCount = pending.Count;
                 foreach (var item in pending)
                     await queue.EnqueueAsync(item, stoppingToken);
@@ -43,7 +43,7 @@ public sealed class DailyScanWorker(
         }
     }
 
-    private async Task<List<NotificationQueueMessage>> ScanAndQueueAsync(string channel, bool enqueueReminders, CancellationToken cancellationToken)
+    private async Task<List<NotificationQueueMessage>> ScanAndQueueAsync(bool enqueueReminders, CancellationToken cancellationToken)
     {
         await using var scope = scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<MpsDbContext>();
@@ -53,13 +53,13 @@ public sealed class DailyScanWorker(
 
         await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
         await db.ParkingContracts
-            .Where(contract => contract.Status == ContractStatuses.Active && contract.EndDate < today)
+            .Where(ContractRules.ActiveForExpiry(today))
             .ExecuteUpdateAsync(setters => setters
                 .SetProperty(contract => contract.Status, ContractStatuses.Expired)
                 .SetProperty(contract => contract.UpdatedAtUtc, now), cancellationToken);
 
         await db.ParkingContracts
-            .Where(contract => contract.Status == ContractStatuses.Pending && contract.StartDate <= today)
+            .Where(ContractRules.PendingForActivation(today))
             .ExecuteUpdateAsync(setters => setters
                 .SetProperty(contract => contract.Status, ContractStatuses.Active)
                 .SetProperty(contract => contract.UpdatedAtUtc, now), cancellationToken);
@@ -70,16 +70,18 @@ public sealed class DailyScanWorker(
             queueItems = await db.NotificationLogs.AsNoTracking()
                 .Where(log => log.NotificationType == NotificationTypes.ExpiryReminder &&
                               log.Status == NotificationStatuses.Pending &&
+                              log.Channel == NotificationChannels.Email &&
+                              log.DueDate >= today &&
+                              log.DueDate <= throughDate &&
+                              log.Contract.Student.EmailAddress != null &&
+                              log.Contract.Student.EmailAddress != string.Empty &&
                               log.Contract.Status != ContractStatuses.Cancelled)
                 .Select(log => new NotificationQueueMessage(log.NotificationLogId))
                 .ToListAsync(cancellationToken);
         }
 
         var dueContracts = await db.ParkingContracts.AsNoTracking()
-            .Where(contract => contract.Status == ContractStatuses.Active &&
-                               contract.StartDate <= today &&
-                               contract.EndDate >= today &&
-                               contract.EndDate <= throughDate)
+            .Where(ContractRules.ReminderDue(today))
             .Select(contract => new { contract.SchoolId, contract.ContractId, contract.StudentId, contract.EndDate })
             .ToListAsync(cancellationToken);
         var dueContractIds = dueContracts.Select(contract => contract.ContractId).ToArray();
@@ -107,7 +109,7 @@ public sealed class DailyScanWorker(
                     ContractId = contract.ContractId,
                     StudentId = contract.StudentId,
                     NotificationType = NotificationTypes.ExpiryReminder,
-                    Channel = channel,
+                    Channel = NotificationChannels.Email,
                     Status = NotificationStatuses.Pending,
                     DueDate = contract.EndDate,
                     CreatedAtUtc = now
@@ -122,7 +124,8 @@ public sealed class DailyScanWorker(
             : await db.NotificationLogs.AsNoTracking()
                 .Where(log => dueContractIds.Contains(log.ContractId) &&
                               log.NotificationType == NotificationTypes.ExpiryReminder &&
-                              log.Status == NotificationStatuses.Pending)
+                              log.Status == NotificationStatuses.Pending &&
+                              log.Channel == NotificationChannels.Email)
                 .Select(log => log.NotificationLogId)
                 .ToListAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
@@ -133,6 +136,9 @@ public sealed class DailyScanWorker(
         return queued;
     }
 
-    private static string NormalizeChannel(string? channel) =>
-        string.Equals(channel, "Zalo", StringComparison.OrdinalIgnoreCase) ? "Zalo" : "SMS";
+    private static bool IsEmailConfigured(IConfiguration configuration) =>
+        !string.IsNullOrWhiteSpace(configuration["Email:SmtpHost"]) &&
+        !string.IsNullOrWhiteSpace(configuration["Email:SmtpUsername"]) &&
+        !string.IsNullOrWhiteSpace(configuration["Email:SmtpPassword"]) &&
+        !string.IsNullOrWhiteSpace(configuration["Email:FromAddress"]);
 }

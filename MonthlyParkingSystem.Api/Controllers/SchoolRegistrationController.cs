@@ -114,10 +114,16 @@ public sealed class SchoolRegistrationController(
         await sendTransaction.CommitAsync(cancellationToken);
         try
         {
+            var otpHtml = MpsEmailTemplates.BuildOtpEmail(otp, request.SchoolName, request.Username);
+            var plainMessage = $"[MPS - XÁC MINH ĐĂNG KÝ TRƯỜNG]\n\n" +
+                $"Chào {request.Username}, bạn vừa thực hiện đăng ký trường {request.SchoolName} trên hệ thống MPS.\n\n" +
+                $"MÃ XÁC MINH (OTP) CỦA BẠN LÀ: {otp}\n\n" +
+                $"Mã có hiệu lực trong vòng 5 phút. Tuyệt đối không chia sẻ mã này cho người khác.\n" +
+                $"Hệ thống Quản lý Gửi xe Tháng KTX (MPS Residence).";
             await emailSender.SendEmailAsync(emailAddress,
                 "Mã xác minh đăng ký MPS",
-                $"Mã xác minh đăng ký trường trên MPS của bạn là: {otp}\n\nMã có hiệu lực trong 5 phút. Không chia sẻ mã này cho người khác.",
-                registrationId.ToString("N"), cancellationToken);
+                plainMessage,
+                registrationId.ToString("N"), cancellationToken, otpHtml);
         }
         catch (Exception exception) when (exception is SmtpException or InvalidOperationException or TaskCanceledException or FormatException)
         {

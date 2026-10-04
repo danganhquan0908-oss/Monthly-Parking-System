@@ -62,13 +62,15 @@ BEGIN
         StudentCode     nvarchar(32) NOT NULL,
         FullName        nvarchar(150) NOT NULL,
         RoomNumber      nvarchar(30) NOT NULL,
+        EmailAddress    nvarchar(320) NULL,
         PhoneEncrypted  varbinary(512) NULL,
         CreatedAtUtc    datetime2(0) NOT NULL CONSTRAINT DF_Students_CreatedAtUtc DEFAULT SYSUTCDATETIME(),
         UpdatedAtUtc    datetime2(0) NOT NULL CONSTRAINT DF_Students_UpdatedAtUtc DEFAULT SYSUTCDATETIME(),
         CONSTRAINT PK_Students PRIMARY KEY CLUSTERED (StudentId),
         CONSTRAINT UQ_Students_StudentCode UNIQUE (StudentCode),
         CONSTRAINT CK_Students_FullName_NotBlank CHECK (LEN(LTRIM(RTRIM(FullName))) > 0),
-        CONSTRAINT CK_Students_RoomNumber_NotBlank CHECK (LEN(LTRIM(RTRIM(RoomNumber))) > 0)
+        CONSTRAINT CK_Students_RoomNumber_NotBlank CHECK (LEN(LTRIM(RTRIM(RoomNumber))) > 0),
+        CONSTRAINT CK_Students_EmailAddress_NotBlank CHECK (EmailAddress IS NULL OR LEN(LTRIM(RTRIM(EmailAddress))) > 0)
     );
 END;
 GO
@@ -149,7 +151,7 @@ BEGIN
         DueDate             date NOT NULL,
         AttemptCount       tinyint NOT NULL CONSTRAINT DF_NotificationLogs_AttemptCount DEFAULT (0),
         ProviderMessageId  nvarchar(120) NULL,
-        DestinationMasked nvarchar(32) NULL,
+        DestinationMasked nvarchar(320) NULL,
         ErrorMessage       nvarchar(1000) NULL,
         CreatedAtUtc       datetime2(0) NOT NULL CONSTRAINT DF_NotificationLogs_CreatedAtUtc DEFAULT SYSUTCDATETIME(),
         SentAtUtc          datetime2(0) NULL,
@@ -157,7 +159,7 @@ BEGIN
         CONSTRAINT FK_NotificationLogs_Contract_Student FOREIGN KEY (ContractId, StudentId)
             REFERENCES dbo.ParkingContracts(ContractId, StudentId),
         CONSTRAINT CK_NotificationLogs_Type CHECK (NotificationType IN ('ExpiryReminder', 'ExpiredNotice')),
-        CONSTRAINT CK_NotificationLogs_Channel CHECK (Channel IN ('SMS', 'Zalo')),
+        CONSTRAINT CK_NotificationLogs_Channel CHECK (Channel IN ('SMS', 'Zalo', 'Email')),
         CONSTRAINT CK_NotificationLogs_Status CHECK (Status IN ('Pending', 'Sent', 'Failed')),
         CONSTRAINT CK_NotificationLogs_Attempts CHECK (AttemptCount <= 4),
         CONSTRAINT CK_NotificationLogs_SentAt CHECK ((Status = 'Sent' AND SentAtUtc IS NOT NULL) OR (Status <> 'Sent' AND SentAtUtc IS NULL))

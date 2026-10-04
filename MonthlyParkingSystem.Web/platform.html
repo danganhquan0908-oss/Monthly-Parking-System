@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MPS · Vận hành nền tảng</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgODAiIGZpbGw9Im5vbmUiPgogIDxkZWZzPgogICAgPGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCUiIHkxPSIyMCUiIHgyPSIxMDAlIiB5Mj0iODAlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iIzAyODRjNyIgLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIzOCUiIHN0b3AtY29sb3I9IiMxNGI4YTYiIC8+CiAgICAgIDxzdG9wIG9mZnNldD0iNzAlIiBzdG9wLWNvbG9yPSIjMzRkMzk5IiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmYjcxODUiIC8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cGF0aCBkPSJNIDE0LDY0IEMgMTQsNDAgMjIsMTggMzAsMTggQyAzOCwxOCA0Miw0NCA0OCw0OCBDIDU0LDQ0IDU4LDE4IDY4LDE4IEMgODQsMTggOTIsMzQgODIsNDggQyA3NCw1OCA2NCw1NCA2Miw0OCBMIDYyLDY0IiBzdHJva2U9InVybCgjZykiIHN0cm9rZS13aWR0aD0iMTEiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgLz4KPC9zdmc+">
   <style>
     :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#182230;background:#f5f7fb;font-synthesis:none;text-rendering:optimizeLegibility}
     *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:22px;background:radial-gradient(ellipse at 52% 0%,#e8f1ec 0%,#f5f7fb 55%)}
@@ -13,7 +14,20 @@
 </head>
 <body>
   <main class="card">
-    <div class="brand">MPS · VẬN HÀNH NỀN TẢNG</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <div style="width:42px;height:42px;border-radius:13px;background:#ffffff;border:1px solid #e2e8f0;display:grid;place-items:center;box-shadow:0 4px 14px rgba(2,132,199,0.14)"><svg viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:28px;height:23px;display:block;">
+  <defs>
+    <linearGradient id="mpsFluidGrad" x1="0%" y1="20%" x2="100%" y2="80%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="38%" stop-color="#14b8a6" />
+      <stop offset="70%" stop-color="#34d399" />
+      <stop offset="100%" stop-color="#fb7185" />
+    </linearGradient>
+  </defs>
+  <path d="M 14,64 C 14,40 22,18 30,18 C 38,18 42,44 48,48 C 54,44 58,18 68,18 C 84,18 92,34 82,48 C 74,58 64,54 62,48 L 62,64" stroke="url(#mpsFluidGrad)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" />
+</svg></div>
+      <div><div class="brand">MPS <span style="font-weight:450;color:#788594">· Vận hành</span></div><div style="font-size:11px;color:#8896a6">Platform Administration</div></div>
+    </div>
     <div class="eyebrow">Cấp tenant</div>
     <h1>Thêm trường mới</h1>
     <p>Tạo tenant và lời mời Quản sinh đầu tiên. Khóa vận hành chỉ gửi trong header API và không được lưu trên trình duyệt.</p>

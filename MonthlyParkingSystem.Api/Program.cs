@@ -83,12 +83,6 @@ builder.Services.AddRateLimiter(options =>
         }));
 });
 builder.Services.AddSingleton<NotificationQueue>();
-builder.Services.AddHttpClient<HttpNotificationSender>((services, client) =>
-{
-    var seconds = services.GetRequiredService<IConfiguration>().GetValue<int?>("Notification:HttpTimeoutSeconds") ?? 20;
-    client.Timeout = TimeSpan.FromSeconds(Math.Clamp(seconds, 1, 120));
-});
-builder.Services.AddTransient<INotificationSender>(services => services.GetRequiredService<HttpNotificationSender>());
 builder.Services.AddHostedService<DailyScanWorker>();
 builder.Services.AddHostedService<NotificationProcessor>();
 builder.Services.AddCors(options => options.AddPolicy("Frontend", policy =>
@@ -114,6 +108,23 @@ app.UseCors("Frontend");
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapGet("/health/live", () => Results.Ok(new { status = "live" })).AllowAnonymous();
+app.MapGet("/health/ready", async (MpsDbContext db, CancellationToken cancellationToken) =>
+{
+    try
+    {
+        await db.Schools.AsNoTracking().Select(school => school.SchoolId).Take(1).ToListAsync(cancellationToken);
+        return Results.Ok(new { status = "ready" });
+    }
+    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+    {
+        throw;
+    }
+    catch
+    {
+        return Results.Json(new { status = "unavailable" }, statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+}).AllowAnonymous();
 var sourceFrontendPath = Path.GetFullPath(Path.Combine(app.Environment.ContentRootPath, "..", "MonthlyParkingSystem.Web"));
 var frontendPath = Directory.Exists(sourceFrontendPath) ? sourceFrontendPath : Path.Combine(app.Environment.ContentRootPath, "Frontend");
 var dashboardPath = Path.Combine(frontendPath, "index.html");
@@ -122,6 +133,11 @@ var registrationPagePath = Path.Combine(frontendPath, "register.html");
 app.MapGet("/register", () => Results.File(registrationPagePath, "text/html; charset=utf-8"));
 var platformPagePath = Path.Combine(frontendPath, "platform.html");
 app.MapGet("/platform", () => Results.File(platformPagePath, "text/html; charset=utf-8"));
+var logoPath = Path.Combine(frontendPath, "logo.svg");
+app.MapGet("/logo.svg", () => Results.File(logoPath, "image/svg+xml"));
+app.MapGet("/favicon.ico", () => Results.File(logoPath, "image/svg+xml"));
+var logoPngPath = Path.Combine(frontendPath, "logo.png");
+app.MapGet("/logo.png", () => Results.File(logoPngPath, "image/png"));
 app.MapControllers();
 
 app.Run();

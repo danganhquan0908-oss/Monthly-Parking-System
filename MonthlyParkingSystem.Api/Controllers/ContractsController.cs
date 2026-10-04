@@ -6,6 +6,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using MonthlyParkingSystem.Api.Contracts;
 using MonthlyParkingSystem.Api.Data;
+using MonthlyParkingSystem.Api.Domain.Contracts;
 using MonthlyParkingSystem.Api.Models;
 using MonthlyParkingSystem.Api.Services;
 
@@ -21,8 +22,8 @@ public sealed class ContractsController(MpsDbContext db, IPhoneEncryptionService
     [ProducesResponseType<ContractResponse>(StatusCodes.Status201Created)]
     public async Task<ActionResult<ContractResponse>> Register(RegisterContractRequest request, CancellationToken cancellationToken)
     {
-        if (request.StartDate == default || request.EndDate == default) return BadRequest("StartDate and EndDate are required.");
-        if (request.EndDate < request.StartDate) return BadRequest("EndDate must be on or after StartDate.");
+        if (!ContractRules.IsValidPeriod(request.StartDate, request.EndDate))
+            return BadRequest("StartDate and EndDate are required, and EndDate must be on or after StartDate.");
         var studentCode = request.StudentCode.Trim();
         var plate = NormalizePlate(request.LicensePlate);
         if (plate.Length == 0) return BadRequest("LicensePlate is required.");
@@ -37,7 +38,7 @@ public sealed class ContractsController(MpsDbContext db, IPhoneEncryptionService
                 student = new Student { SchoolId = schoolId, StudentCode = studentCode };
                 db.Students.Add(student);
             }
-            ApplyStudentDetails(student, request.FullName, request.RoomNumber, request.PhoneNumber, creating: true);
+            ApplyStudentDetails(student, request.FullName, request.RoomNumber, request.EmailAddress, request.PhoneNumber, creating: true);
 
             await db.SaveChangesAsync(cancellationToken);
             var today = DateOnly.FromDateTime(DateTime.Now);
@@ -50,12 +51,11 @@ public sealed class ContractsController(MpsDbContext db, IPhoneEncryptionService
                 previous.UpdatedAtUtc = DateTime.UtcNow;
             }
             
-            var hasOverlap = await db.ParkingContracts.AnyAsync(x => 
-                x.SchoolId == schoolId && 
-                x.StudentId == student.StudentId && 
-                (x.Status == ContractStatuses.Active || x.Status == ContractStatuses.Pending) &&
-                request.StartDate <= x.EndDate && request.EndDate >= x.StartDate, 
-                cancellationToken);
+            var hasOverlap = await db.ParkingContracts
+                .Where(x => x.SchoolId == schoolId && x.StudentId == student.StudentId)
+                .Where(ContractRules.BlockingStatus())
+                .Where(ContractRules.OverlapsPeriod(request.StartDate, request.EndDate))
+                .AnyAsync(cancellationToken);
 
             if (hasOverlap)
                 return Conflict("Thời gian hợp đồng bị chồng chéo với một hợp đồng (Active hoặc Pending) khác của sinh viên.");
@@ -75,20 +75,22 @@ public sealed class ContractsController(MpsDbContext db, IPhoneEncryptionService
                 Vehicle = vehicle,
                 StartDate = request.StartDate,
                 EndDate = request.EndDate,
-                Status = request.EndDate < today ? ContractStatuses.Expired : request.StartDate > today ? ContractStatuses.Pending : ContractStatuses.Active
+                Status = ContractRules.InitialStatus(request.StartDate, request.EndDate, today)
             };
             db.ParkingContracts.Add(contract);
 
             await db.SaveChangesAsync(cancellationToken);
 
             // Save once to obtain the identity ContractId, then write its audit record in the same transaction.
+            var creationSnapshot = BuildContractSnapshot(contract, student, vehicle);
+            creationSnapshot["EmailAddress"] = "đã cung cấp";
             db.AuditLogs.Add(new AuditLog
             {
                 SchoolId = schoolId,
                 EntityName = "ParkingContract",
                 EntityId = contract.ContractId,
                 Action = "Create",
-                NewValues = JsonSerializer.Serialize(BuildContractSnapshot(contract, student, vehicle)),
+                NewValues = JsonSerializer.Serialize(creationSnapshot),
                 ChangedBy = User.Identity?.Name,
                 ChangedAtUtc = DateTime.UtcNow
             });
@@ -118,8 +120,8 @@ public sealed class ContractsController(MpsDbContext db, IPhoneEncryptionService
     [ProducesResponseType<ContractResponse>(StatusCodes.Status200OK)]
     public async Task<ActionResult<ContractResponse>> Update(long id, UpdateContractRequest request, CancellationToken cancellationToken)
     {
-        if (request.StartDate == default || request.EndDate == default) return BadRequest("StartDate and EndDate are required.");
-        if (request.EndDate < request.StartDate) return BadRequest("EndDate must be on or after StartDate.");
+        if (!ContractRules.IsValidPeriod(request.StartDate, request.EndDate))
+            return BadRequest("StartDate and EndDate are required, and EndDate must be on or after StartDate.");
         var plate = NormalizePlate(request.LicensePlate);
         if (plate.Length == 0) return BadRequest("LicensePlate is required.");
         await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
@@ -134,25 +136,24 @@ public sealed class ContractsController(MpsDbContext db, IPhoneEncryptionService
 
             var today = DateOnly.FromDateTime(DateTime.Now);
             
-            var hasOverlap = await db.ParkingContracts.AnyAsync(x => 
-                x.SchoolId == CurrentSchoolId() && 
-                x.StudentId == contract.StudentId && 
-                x.ContractId != id &&
-                (x.Status == ContractStatuses.Active || x.Status == ContractStatuses.Pending) &&
-                request.StartDate <= x.EndDate && request.EndDate >= x.StartDate, 
-                cancellationToken);
+            var hasOverlap = await db.ParkingContracts
+                .Where(x => x.SchoolId == CurrentSchoolId() && x.StudentId == contract.StudentId && x.ContractId != id)
+                .Where(ContractRules.BlockingStatus())
+                .Where(ContractRules.OverlapsPeriod(request.StartDate, request.EndDate))
+                .AnyAsync(cancellationToken);
 
             if (hasOverlap)
                 return Conflict("Thời gian cập nhật bị chồng chéo với một hợp đồng khác.");
 
             var changingPlate = !string.Equals(contract.Vehicle.LicensePlate, plate, StringComparison.OrdinalIgnoreCase);
-            if (changingPlate && (contract.Status != ContractStatuses.Active || contract.EndDate < today))
+            if (changingPlate && !ContractRules.CanChangeVehicle(contract.Status, contract.EndDate, today))
                 return Conflict("Chỉ được đổi biển số khi hợp đồng còn hiệu lực hoặc chưa bắt đầu.");
 
-            ApplyStudentDetails(contract.Student, request.FullName, request.RoomNumber, request.PhoneNumber, creating: false);
+            var emailChanged = !string.Equals(contract.Student.EmailAddress, request.EmailAddress.Trim(), StringComparison.OrdinalIgnoreCase);
+            ApplyStudentDetails(contract.Student, request.FullName, request.RoomNumber, request.EmailAddress, request.PhoneNumber, creating: false);
             contract.StartDate = request.StartDate;
             contract.EndDate = request.EndDate;
-            contract.Status = request.EndDate < today ? ContractStatuses.Expired : request.StartDate > today ? ContractStatuses.Pending : ContractStatuses.Active;
+            contract.Status = ContractRules.InitialStatus(request.StartDate, request.EndDate, today);
             contract.UpdatedAtUtc = DateTime.UtcNow;
 
             if (changingPlate)
@@ -163,6 +164,8 @@ public sealed class ContractsController(MpsDbContext db, IPhoneEncryptionService
                 AddVehicleChange(contract, plate);
             }
 
+            var updatedSnapshot = BuildContractSnapshot(contract, contract.Student, contract.Vehicle);
+            if (emailChanged) updatedSnapshot["EmailAddress"] = "đã cập nhật";
             db.AuditLogs.Add(new AuditLog
             {
                 SchoolId = contract.SchoolId,
@@ -170,7 +173,7 @@ public sealed class ContractsController(MpsDbContext db, IPhoneEncryptionService
                 EntityId = contract.ContractId,
                 Action = "Update",
                 OldValues = JsonSerializer.Serialize(oldValues),
-                NewValues = JsonSerializer.Serialize(BuildContractSnapshot(contract, contract.Student, contract.Vehicle)),
+                NewValues = JsonSerializer.Serialize(updatedSnapshot),
                 ChangedBy = User.Identity?.Name,
                 ChangedAtUtc = DateTime.UtcNow
             });
@@ -219,7 +222,7 @@ public sealed class ContractsController(MpsDbContext db, IPhoneEncryptionService
             var contract = await db.ParkingContracts.Include(x => x.Student).Include(x => x.Vehicle)
                 .SingleOrDefaultAsync(x => x.SchoolId == CurrentSchoolId() && x.ContractId == id, cancellationToken);
             if (contract is null) return NotFound();
-            if ((contract.Status != ContractStatuses.Active && contract.Status != ContractStatuses.Pending) || contract.EndDate < DateOnly.FromDateTime(DateTime.Now))
+            if (!ContractRules.CanChangeVehicle(contract.Status, contract.EndDate, DateOnly.FromDateTime(DateTime.Now)))
                 return Conflict("Chỉ được đổi biển số khi hợp đồng còn hiệu lực hoặc chưa bắt đầu.");
             if (string.Equals(contract.Vehicle.LicensePlate, plate, StringComparison.OrdinalIgnoreCase))
                 return BadRequest("Biển số mới phải khác biển số hiện tại.");
@@ -263,7 +266,7 @@ public sealed class ContractsController(MpsDbContext db, IPhoneEncryptionService
         var contract = await db.ParkingContracts.Include(x => x.Student).Include(x => x.Vehicle)
             .SingleOrDefaultAsync(x => x.SchoolId == CurrentSchoolId() && x.ContractId == id, cancellationToken);
         if (contract is null) return NotFound();
-        if ((contract.Status != ContractStatuses.Active && contract.Status != ContractStatuses.Pending) || contract.EndDate < DateOnly.FromDateTime(DateTime.Now))
+        if (!ContractRules.CanCancel(contract.Status, contract.EndDate, DateOnly.FromDateTime(DateTime.Now)))
             return Conflict("Chỉ có thể hủy hợp đồng đang hoặc sẽ có hiệu lực.");
 
         var oldValues = BuildContractSnapshot(contract, contract.Student, contract.Vehicle);
@@ -291,10 +294,11 @@ public sealed class ContractsController(MpsDbContext db, IPhoneEncryptionService
         return Ok(ToResponse(contract, contract.Student, contract.Vehicle));
     }
 
-    private void ApplyStudentDetails(Student student, string fullName, string roomNumber, string? phoneNumber, bool creating)
+    private void ApplyStudentDetails(Student student, string fullName, string roomNumber, string emailAddress, string? phoneNumber, bool creating)
     {
         student.FullName = fullName.Trim();
         student.RoomNumber = roomNumber.Trim();
+        student.EmailAddress = emailAddress.Trim().ToLowerInvariant();
         if (creating || !string.IsNullOrWhiteSpace(phoneNumber)) student.PhoneEncrypted = phoneEncryption.Encrypt(phoneNumber);
         student.UpdatedAtUtc = DateTime.UtcNow;
     }
@@ -321,11 +325,23 @@ public sealed class ContractsController(MpsDbContext db, IPhoneEncryptionService
     private ContractResponse ToResponse(ParkingContract contract, Student student, Vehicle vehicle)
     {
         var phoneNumber = phoneEncryption.Decrypt(student.PhoneEncrypted);
+        var emailAddress = student.EmailAddress;
         if (!User.IsInRole(StaffRoles.Admin) && !User.IsInRole(StaffRoles.Manager))
+        {
             phoneNumber = MaskPhone(phoneNumber);
+            emailAddress = MaskEmail(emailAddress);
+        }
         return new ContractResponse(contract.ContractId, student.StudentCode, student.FullName, student.RoomNumber,
             vehicle.LicensePlate, contract.StartDate, contract.EndDate, contract.Status,
-            contract.CreatedAtUtc, contract.UpdatedAtUtc, phoneNumber);
+            contract.CreatedAtUtc, contract.UpdatedAtUtc, emailAddress, phoneNumber);
+    }
+
+    private static string? MaskEmail(string? emailAddress)
+    {
+        if (string.IsNullOrWhiteSpace(emailAddress)) return null;
+        var separator = emailAddress.LastIndexOf('@');
+        if (separator <= 0 || separator == emailAddress.Length - 1) return "***";
+        return $"{emailAddress[0]}***{emailAddress[separator..]}";
     }
 
     private static string? MaskPhone(string? phoneNumber)
@@ -409,6 +425,7 @@ public sealed class ContractsController(MpsDbContext db, IPhoneEncryptionService
                 "StudentCode" => "Mã sinh viên",
                 "FullName" => "Họ tên",
                 "RoomNumber" => "Phòng",
+                "EmailAddress" => "Email sinh viên",
                 "LicensePlate" => "Biển số",
                 "StartDate" => "Ngày bắt đầu",
                 "EndDate" => "Ngày hết hạn",

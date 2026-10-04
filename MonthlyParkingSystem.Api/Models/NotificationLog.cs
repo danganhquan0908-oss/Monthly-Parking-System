@@ -12,6 +12,13 @@ public static class NotificationTypes
     public const string ExpiryReminder = "ExpiryReminder";
 }
 
+public static class NotificationChannels
+{
+    public const string Email = "Email";
+    public const string Sms = "SMS";
+    public const string Zalo = "Zalo";
+}
+
 public sealed class NotificationLog
 {
     public long NotificationLogId { get; set; }
@@ -19,7 +26,7 @@ public sealed class NotificationLog
     public long ContractId { get; set; }
     public int StudentId { get; set; }
     public string NotificationType { get; set; } = NotificationTypes.ExpiryReminder;
-    public string Channel { get; set; } = "SMS";
+    public string Channel { get; set; } = NotificationChannels.Email;
     public string Status { get; set; } = NotificationStatuses.Pending;
     public DateOnly DueDate { get; set; }
     public byte AttemptCount { get; set; }

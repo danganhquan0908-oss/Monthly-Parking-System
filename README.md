@@ -8,12 +8,14 @@ MPS là hệ thống quản lý hợp đồng gửi xe tháng tại ký túc xá
 - Quản lý biển số xe và lưu lịch sử đổi xe, cập nhật, hủy hợp đồng.
 - Dashboard thống kê hợp đồng đang hoạt động, sắp hết hạn và đã hết hạn; tìm kiếm và phân trang.
 - Quét hạn tự động mỗi ngày và ghi nhật ký kết quả thông báo.
+- Gửi email tự động nhắc sinh viên trước hạn hợp đồng qua SMTP.
 - Đăng nhập nhân viên theo trường với vai trò `Admin`, `Manager`, `Guard` và `Staff`.
 - Mời, khóa và mở tài khoản nhân viên; giới hạn dữ liệu theo trường.
 - Đăng ký trường và tạo Admin đầu tiên bằng email OTP khi SMTP đã được cấu hình.
+- Email sinh viên là bắt buộc khi tạo/cập nhật hợp đồng; địa chỉ được che với vai trò không quản lý.
 - Mã hóa số điện thoại sinh viên ở tầng ứng dụng; che số điện thoại theo quyền người dùng.
 
-MPS hiện là công cụ nội bộ cho nhân viên KTX, chưa có cổng sinh viên hay thanh toán trực tuyến. Email OTP và nhắc hạn SMS/Zalo cần cấu hình nhà cung cấp trước khi gửi thật.
+MPS hiện là công cụ nội bộ cho nhân viên KTX, chưa có cổng sinh viên hay thanh toán trực tuyến. Email OTP và nhắc hạn dùng chung cấu hình SMTP.
 
 ## Công nghệ
 
@@ -27,10 +29,12 @@ MPS hiện là công cụ nội bộ cho nhân viên KTX, chưa có cổng sinh 
 ```text
 MonthlyParkingSystem.Api/   API, xác thực, truy cập dữ liệu và dịch vụ nền
 MonthlyParkingSystem.Web/   Dashboard, đăng ký trường và trang vận hành nền tảng
+docs/                       Sơ đồ phân tích, ERD, ma trận truy vết và checklist vận hành
+MonthlyParkingSystem.Tests/ Kiểm thử tự động các quy tắc vòng đời hợp đồng
+MPS.sln                    Solution cho API và test project
+.env.example               Tên biến môi trường mẫu, không có bí mật thật
 Init_Database.sql           Khởi tạo schema MPS
 Migrate_*.sql               Các script nâng cấp database theo Epic
-System_Design_And_Requirements.md
-PRODUCT REQUIREMENTS DOCUMENT.docx
 Project_Summary.md
 ```
 
@@ -51,6 +55,7 @@ sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i Init_Database.sql
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i Migrate_Epic5_MultiTenant.sql
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i Migrate_Epic5_1_SelfServiceRegistration.sql
 sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i Migrate_Epic5_2_EmailRegistration.sql
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i Migrate_Epic6_EmailNotifications.sql
 ```
 
 Nếu nâng cấp database đã có dữ liệu, hãy sao lưu trước rồi áp dụng các migration theo thứ tự và hướng dẫn trong [README của API](MonthlyParkingSystem.Api/README.md). Không chạy quy trình khởi tạo database mới lên dữ liệu production.
@@ -87,7 +92,7 @@ Các giá trị bí mật được cung cấp qua biến môi trường hoặc s
 .\Configure-Smtp.ps1
 ```
 
-Backend phải chạy ở môi trường `Development` để nạp User Secrets. Cấu hình SMTP này hiện phục vụ OTP đăng ký trường; thông báo sắp hết hạn vẫn cần HTTP gateway SMS/Zalo theo luồng hiện tại.
+Backend phải chạy ở môi trường `Development` để nạp User Secrets. Cùng cấu hình SMTP này được dùng cho OTP đăng ký trường và email nhắc sinh viên. Hợp đồng cũ cần được bổ sung email qua thao tác cập nhật; worker chỉ xếp hàng nhắc hạn cho sinh viên có email.
 
 | Dịch vụ | Cấu hình chính | Mục đích |
 | --- | --- | --- |
@@ -95,8 +100,7 @@ Backend phải chạy ở môi trường `Development` để nạp User Secrets.
 | Mã hóa số điện thoại | `MPS_PHONE_ENCRYPTION_KEY` | Khóa AES-GCM ổn định |
 | JWT | `MPS_JWT_SIGNING_KEY` | Ký token đăng nhập |
 | Vận hành nền tảng | `MPS_PLATFORM_PROVISIONING_KEY` | Tạo/tạm ngưng trường và cấp lời mời đầu tiên |
-| Email | `Email__SmtpHost`, `Email__SmtpPort`, `Email__SmtpUsername`, `Email__SmtpPassword`, `Email__FromAddress` | Gửi OTP đăng ký trường |
-| SMS/Zalo | `MPS_NOTIFICATION_ENDPOINT`, `MPS_NOTIFICATION_TOKEN`, `MPS_NOTIFICATION_CHANNEL` | Gửi nhắc hạn qua HTTP gateway |
+| Email | `Email__SmtpHost`, `Email__SmtpPort`, `Email__SmtpUsername`, `Email__SmtpPassword`, `Email__FromAddress` | Gửi OTP đăng ký trường và email nhắc hạn |
 | CORS production | `Cors__AllowedOrigins` | Danh sách origin frontend được phép |
 
 Trong Production, dùng SQL Server phù hợp môi trường triển khai, HTTPS, secret store, CORS allowlist và quy trình backup/khôi phục đã kiểm chứng. LocalDB và cấu hình CORS Development chỉ dành cho phát triển.
@@ -104,11 +108,21 @@ Trong Production, dùng SQL Server phù hợp môi trường triển khai, HTTPS
 ## API và tài liệu
 
 - [Danh sách route, quyền truy cập và cấu hình backend](MonthlyParkingSystem.Api/README.md)
-- [Thiết kế hệ thống và yêu cầu nghiệp vụ](System_Design_And_Requirements.md)
-- [PRD](PRODUCT%20REQUIREMENTS%20DOCUMENT.docx)
+- [Sơ đồ phân tích, ERD và ma trận truy vết](docs/System_Analysis_Design.md)
+- [Checklist production và triển khai](docs/Production_Readiness_Checklist.md)
 - [Tổng kết các Epic đã triển khai](Project_Summary.md)
 
 Các API nghiệp vụ nằm dưới `/api/v1`. Dashboard và API cùng host tại cổng `5127` khi chạy profile `http`. Các route hợp đồng và tài khoản yêu cầu JWT; route đăng ký trường là công khai nhưng chỉ hoàn tất khi cấu hình SMTP và xác minh OTP.
+
+## Kiểm thử tự động
+
+Chạy kiểm thử quy tắc ngày hợp đồng, chồng lấn, trạng thái, hủy/đổi xe và cửa sổ nhắc hạn bằng lệnh:
+
+```powershell
+dotnet test MPS.sln --configuration Release
+```
+
+Các kiểm thử domain không gửi email và không kết nối hoặc thay đổi database thật. Kiểm thử tích hợp SQL Server, tenant isolation và SMTP vẫn cần được bổ sung trước production.
 
 ## Bảo mật dữ liệu
 

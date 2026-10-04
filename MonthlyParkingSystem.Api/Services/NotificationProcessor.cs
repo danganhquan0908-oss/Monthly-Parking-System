@@ -1,5 +1,4 @@
-using System.Net;
-using System.Security.Cryptography;
+using System.Net.Mail;
 using Microsoft.EntityFrameworkCore;
 using MonthlyParkingSystem.Api.Data;
 using MonthlyParkingSystem.Api.Models;
@@ -50,36 +49,41 @@ public sealed class NotificationProcessor(
             return;
         }
 
-        var phoneEncryption = services.GetRequiredService<IPhoneEncryptionService>();
-        string? destination;
-        try
-        {
-            destination = phoneEncryption.Decrypt(log.Contract.Student.PhoneEncrypted);
-        }
-        catch (Exception exception) when (exception is CryptographicException or InvalidOperationException)
-        {
-            MarkFailed(log, 0, "Student phone number could not be decrypted.");
-            await db.SaveChangesAsync(stoppingToken);
-            logger.LogWarning("Notification log {NotificationLogId} has no usable encrypted phone number", notificationLogId);
-            return;
-        }
-
+        var destination = log.Contract.Student.EmailAddress?.Trim();
         if (string.IsNullOrWhiteSpace(destination))
         {
-            MarkFailed(log, 0, "Student phone number is missing.");
+            MarkFailed(log, 0, "Student email address is missing.");
             await db.SaveChangesAsync(stoppingToken);
             return;
         }
 
-        log.DestinationMasked = MaskPhone(destination);
-        var message = $"MPS: Hợp đồng gửi xe biển số {log.Contract.Vehicle.LicensePlate} sẽ hết hạn ngày {log.DueDate:dd/MM/yyyy}. Vui lòng liên hệ Ban quản lý KTX để gia hạn.";
-        var sender = services.GetRequiredService<INotificationSender>();
+        log.DestinationMasked = MaskEmail(destination);
+        const string subject = "MPS - Nhắc gia hạn hợp đồng gửi xe";
+        var studentName = log.Contract.Student?.FullName ?? "Sinh viên";
+        var room = log.Contract.Student?.RoomNumber ?? "KTX";
+        var message = $"[MPS - THÔNG BÁO NHẮC GIA HẠN HỢP ĐỒNG GỬI XE]\n\n" +
+            $"Kính gửi: {studentName} (Phòng {room}),\n" +
+            $"Hợp đồng gửi xe biển số {log.Contract.Vehicle.LicensePlate} của bạn sẽ hết hạn ngày {log.DueDate:dd/MM/yyyy}.\n\n" +
+            $"Vui lòng liên hệ Văn phòng Quản sinh / Ban Quản lý KTX trước ngày hết hạn để gia hạn hợp đồng.\n" +
+            $"Sau thời hạn trên, thẻ từ phương tiện sẽ tạm thời bị khóa tại cổng barrier.\n\n" +
+            $"Email này được gửi tự động từ Hệ thống MPS Residence.";
+        var sender = services.GetRequiredService<IEmailSender>();
         byte attempts = 1;
         try
         {
             var pipeline = CreateRetryPipeline(notificationLogId, () => attempts = (byte)Math.Min(attempts + 1, 4));
+            var expiryHtml = MpsEmailTemplates.BuildContractExpiryEmail(
+                log.Contract.Vehicle.LicensePlate,
+                log.DueDate,
+                log.Contract.Student?.FullName,
+                log.Contract.Student?.RoomNumber,
+                log.Contract.Student?.StudentCode);
             log.ProviderMessageId = await pipeline.ExecuteAsync(
-                async token => await sender.SendAsync(log.Channel, destination, message, notificationLogId, token),
+                async _ =>
+                {
+                    await sender.SendEmailAsync(destination, subject, message, notificationLogId.ToString(), stoppingToken, expiryHtml);
+                    return (string?)null;
+                },
                 stoppingToken);
             log.Status = NotificationStatuses.Sent;
             log.AttemptCount = attempts;
@@ -109,7 +113,7 @@ public sealed class NotificationProcessor(
                 MaxDelay = TimeSpan.FromSeconds(5),
                 BackoffType = DelayBackoffType.Constant,
                 ShouldHandle = new PredicateBuilder<string?>()
-                    .Handle<HttpRequestException>(IsTransientHttpError)
+                    .Handle<SmtpException>(IsTransientSmtpError)
                     .Handle<TimeoutException>()
                     .Handle<TaskCanceledException>(),
                 OnRetry = args =>
@@ -122,9 +126,9 @@ public sealed class NotificationProcessor(
             })
             .Build();
 
-    private static bool IsTransientHttpError(HttpRequestException exception) =>
-        exception.StatusCode is null || exception.StatusCode == HttpStatusCode.RequestTimeout ||
-        exception.StatusCode == HttpStatusCode.TooManyRequests || (int)exception.StatusCode >= 500;
+    private static bool IsTransientSmtpError(SmtpException exception) =>
+        exception.StatusCode is SmtpStatusCode.GeneralFailure or SmtpStatusCode.MailboxBusy or
+            SmtpStatusCode.InsufficientStorage or SmtpStatusCode.ServiceNotAvailable;
 
     private static void MarkFailed(NotificationLog log, byte attempts, string error)
     {
@@ -136,17 +140,17 @@ public sealed class NotificationProcessor(
 
     private static string SafeErrorMessage(Exception exception) => exception switch
     {
-        HttpRequestException { StatusCode: { } status } => $"Notification gateway returned HTTP {(int)status}.",
-        HttpRequestException => "Notification gateway network error.",
-        TimeoutException or TaskCanceledException => "Notification gateway timed out.",
-        InvalidOperationException => "Notification gateway is not configured correctly.",
+        SmtpException { StatusCode: { } status } => $"Email provider returned SMTP status {(int)status}.",
+        TimeoutException or TaskCanceledException => "Email delivery timed out.",
+        InvalidOperationException => "Email service is not configured correctly.",
+        FormatException => "Student email address is invalid.",
         _ => "Notification delivery failed."
     };
 
-    private static string MaskPhone(string phone)
+    private static string MaskEmail(string email)
     {
-        var digits = new string(phone.Where(char.IsDigit).ToArray());
-        if (digits.Length <= 4) return new string('*', Math.Max(1, digits.Length));
-        return new string('*', digits.Length - 4) + digits[^4..];
+        var separator = email.LastIndexOf('@');
+        if (separator <= 0 || separator == email.Length - 1) return "***";
+        return $"{email[0]}{new string('*', separator - 1)}{email[separator..]}";
     }
 }

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 80" fill="none">
+  <defs>
+    <linearGradient id="mpsFluidGrad" x1="0%" y1="20%" x2="100%" y2="80%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="38%" stop-color="#14b8a6" />
+      <stop offset="70%" stop-color="#34d399" />
+      <stop offset="100%" stop-color="#fb7185" />
+    </linearGradient>
+  </defs>
+  <path d="M 14,64 C 14,40 22,18 30,18 C 38,18 42,44 48,48 C 54,44 58,18 68,18 C 84,18 92,34 82,48 C 74,58 64,54 62,48 L 62,64"
+        stroke="url(#mpsFluidGrad)"
+        stroke-width="11"
+        stroke-linecap="round"
+        stroke-linejoin="round" />
+</svg>

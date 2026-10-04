@@ -1,32 +1,59 @@
-# .NET build output
+# .NET build, test, and publish output
 **/bin/
 **/obj/
 **/out/
+**/TestResults/
+**/publish/
+coverage/
+*.coverage
+*.coveragexml
 
 # IDE and local user state
 .vs/
 .idea/
+.vscode/
 *.user
 *.suo
 *.userosscache
 *.sln.docstates
+*.rsuser
+*.sln.iml
 
 # Local configuration and credentials
 .env
 .env.*
 !.env.example
+!**/.env.example
 **/appsettings.Development.json
 **/appsettings.*.local.json
 **/secrets.json
 **/secrets.*.json
 **/UserSecrets/
+*.publishsettings
+*.pubxml.user
 
-# Local logs and database files
+# Local certificates and private keys
+*.pfx
+*.p12
+*.key
+*.pem
+
+# Local logs, database files, and database backups
 *.log
 *.db
 *.sqlite
+*.sqlite3
 *.mdf
 *.ldf
+*.bak
+*.bacpac
+*.dump
+
+# OS and editor temporary files
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
 
 # Generated PRD working files
 /_prd_render/

@@ -11,6 +11,7 @@ public sealed record ContractResponse(
     string Status,
     DateTime CreatedAtUtc,
     DateTime UpdatedAtUtc,
+    string? EmailAddress,
     string? PhoneNumber);
 
 public sealed record VehicleChangeResponse(

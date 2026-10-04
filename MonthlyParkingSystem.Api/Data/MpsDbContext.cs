@@ -129,11 +129,13 @@ public sealed class MpsDbContext(DbContextOptions<MpsDbContext> options) : DbCon
             {
                 table.HasCheckConstraint("CK_Students_FullName_NotBlank", "LEN(LTRIM(RTRIM([FullName]))) > 0");
                 table.HasCheckConstraint("CK_Students_RoomNumber_NotBlank", "LEN(LTRIM(RTRIM([RoomNumber]))) > 0");
+                table.HasCheckConstraint("CK_Students_EmailAddress_NotBlank", "[EmailAddress] IS NULL OR LEN(LTRIM(RTRIM([EmailAddress]))) > 0");
             });
             entity.HasKey(x => x.StudentId).HasName("PK_Students");
             entity.Property(x => x.StudentCode).HasMaxLength(32).IsRequired();
             entity.Property(x => x.FullName).HasMaxLength(150).IsRequired();
             entity.Property(x => x.RoomNumber).HasMaxLength(30).IsRequired();
+            entity.Property(x => x.EmailAddress).HasMaxLength(320);
             entity.Property(x => x.PhoneEncrypted).HasColumnType("varbinary(512)");
             entity.Property(x => x.CreatedAtUtc).HasDefaultValueSql("SYSUTCDATETIME()");
             entity.Property(x => x.UpdatedAtUtc).HasDefaultValueSql("SYSUTCDATETIME()");
@@ -191,7 +193,7 @@ public sealed class MpsDbContext(DbContextOptions<MpsDbContext> options) : DbCon
             entity.ToTable("NotificationLogs", table =>
             {
                 table.HasCheckConstraint("CK_NotificationLogs_Type", "[NotificationType] IN ('ExpiryReminder', 'ExpiredNotice')");
-                table.HasCheckConstraint("CK_NotificationLogs_Channel", "[Channel] IN ('SMS', 'Zalo')");
+                table.HasCheckConstraint("CK_NotificationLogs_Channel", "[Channel] IN ('SMS', 'Zalo', 'Email')");
                 table.HasCheckConstraint("CK_NotificationLogs_Status", "[Status] IN ('Pending', 'Sent', 'Failed')");
                 table.HasCheckConstraint("CK_NotificationLogs_Attempts", "[AttemptCount] <= 4");
                 table.HasCheckConstraint("CK_NotificationLogs_SentAt", "(([Status] = 'Sent' AND [SentAtUtc] IS NOT NULL) OR ([Status] <> 'Sent' AND [SentAtUtc] IS NULL))");
@@ -203,7 +205,7 @@ public sealed class MpsDbContext(DbContextOptions<MpsDbContext> options) : DbCon
             entity.Property(x => x.DueDate).HasColumnType("date");
             entity.Property(x => x.AttemptCount).HasDefaultValue((byte)0);
             entity.Property(x => x.ProviderMessageId).HasMaxLength(120);
-            entity.Property(x => x.DestinationMasked).HasMaxLength(32);
+            entity.Property(x => x.DestinationMasked).HasMaxLength(320);
             entity.Property(x => x.ErrorMessage).HasMaxLength(1000);
             entity.Property(x => x.CreatedAtUtc).HasDefaultValueSql("SYSUTCDATETIME()");
             entity.HasOne(x => x.Contract).WithMany().HasForeignKey(x => new { x.SchoolId, x.ContractId, x.StudentId })
