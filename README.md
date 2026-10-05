@@ -29,13 +29,11 @@ MPS hiện là công cụ nội bộ cho nhân viên KTX, chưa có cổng sinh 
 ```text
 MonthlyParkingSystem.Api/   API, xác thực, truy cập dữ liệu và dịch vụ nền
 MonthlyParkingSystem.Web/   Dashboard, đăng ký trường và trang vận hành nền tảng
-docs/                       Sơ đồ phân tích, ERD, ma trận truy vết và checklist vận hành
 MonthlyParkingSystem.Tests/ Kiểm thử tự động các quy tắc vòng đời hợp đồng
 MPS.sln                    Solution cho API và test project
 .env.example               Tên biến môi trường mẫu, không có bí mật thật
 Init_Database.sql           Khởi tạo schema MPS
 Migrate_*.sql               Các script nâng cấp database theo Epic
-Project_Summary.md
 ```
 
 ## Chạy trên máy Windows
@@ -108,9 +106,6 @@ Trong Production, dùng SQL Server phù hợp môi trường triển khai, HTTPS
 ## API và tài liệu
 
 - [Danh sách route, quyền truy cập và cấu hình backend](MonthlyParkingSystem.Api/README.md)
-- [Sơ đồ phân tích, ERD và ma trận truy vết](docs/System_Analysis_Design.md)
-- [Checklist production và triển khai](docs/Production_Readiness_Checklist.md)
-- [Tổng kết các Epic đã triển khai](Project_Summary.md)
 
 Các API nghiệp vụ nằm dưới `/api/v1`. Dashboard và API cùng host tại cổng `5127` khi chạy profile `http`. Các route hợp đồng và tài khoản yêu cầu JWT; route đăng ký trường là công khai nhưng chỉ hoàn tất khi cấu hình SMTP và xác minh OTP.
 
