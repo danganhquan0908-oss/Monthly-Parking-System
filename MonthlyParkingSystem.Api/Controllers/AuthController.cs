@@ -115,7 +115,6 @@ public sealed class AuthController(
     [ProducesResponseType<StaffUserResponse>(StatusCodes.Status201Created)]
     public async Task<ActionResult<StaffUserResponse>> CreateStaff(CreateStaffRequest request, CancellationToken cancellationToken)
     {
-        if (request.Role == StaffRoles.Manager && !User.IsInRole(StaffRoles.Admin)) return Forbid();
         var username = request.Username.Trim();
         var user = CreateUser(CurrentSchoolId(), username, request.Password, request.Role);
         db.StaffUsers.Add(user);
@@ -157,7 +156,6 @@ public sealed class AuthController(
         CreateStaffInvitationRequest request,
         CancellationToken cancellationToken)
     {
-        if (request.Role == StaffRoles.Manager && !User.IsInRole(StaffRoles.Admin)) return Forbid();
         var schoolId = CurrentSchoolId();
         var token = InvitationTokenService.CreateToken();
         var invitation = new StaffInvitation

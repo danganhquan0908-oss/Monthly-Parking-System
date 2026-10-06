@@ -585,10 +585,10 @@
       </div>
       <div v-if="showAccounts" class="dialog-backdrop" @click.self="closeAccounts">
         <section class="account-dialog" role="dialog" aria-modal="true" aria-labelledby="accounts-title">
-          <div class="dialog-heading"><div><h2 id="accounts-title">Tài khoản nhân viên</h2><p>Quản lý trong phạm vi {{ currentUser.schoolName }} ({{ schoolCode }}).</p></div><button class="dialog-close" @click="closeAccounts">Đóng</button></div>
+          <div class="dialog-heading"><div><h2 id="accounts-title">Tài khoản nhân sự</h2><p>Quản lý trong phạm vi {{ currentUser.schoolName }} ({{ schoolCode }}).</p></div><button class="dialog-close" @click="closeAccounts">Đóng</button></div>
           <form class="account-form" @submit.prevent="issueStaffInvitation">
-            <div><label for="invite-role">Vai trò mời</label><select id="invite-role" v-model="newStaffRole"><option value="Staff">Nhân viên</option><option value="Guard">Bảo vệ</option><option v-if="currentUser.role==='Admin'" value="Manager">Quản sinh</option></select></div>
-            <div><label>Quyền</label><div style="font-size:12px;color:#687586;padding:10px 0">{{ newStaffRole==='Manager' ? 'Quản lý tài khoản và hợp đồng' : 'Phạm vi trường hiện tại' }}</div></div>
+            <div><label for="invite-role">Vai trò mời</label><select id="invite-role" v-model="newStaffRole"><option value="Manager">Quản sinh</option><option value="Guard">Bảo vệ</option><option value="Staff">Nhân viên</option></select></div>
+            <div><label>Quyền</label><div style="font-size:12px;color:#687586;padding:10px 0">{{ newStaffRole==='Manager' ? 'Quản lý tài khoản và hợp đồng trong trường' : 'Phạm vi trường hiện tại' }}</div></div>
             <button class="small-submit" type="submit" :disabled="staffBusy">Tạo lời mời</button>
           </form>
           <div v-if="issuedInviteUrl" class="invite-result"><strong>Link mời một lần · hạn {{ formatDate(issuedInviteExpiresAt) }}</strong><br>{{ issuedInviteUrl }}<button type="button" @click="copyInvite">Sao chép</button></div>
@@ -776,8 +776,8 @@
               method: 'POST', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ schoolCode: this.schoolCode.trim(), username: this.loginUsername, password: this.loginPassword })
             });
-            const data = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error(this.apiErrorMessage(data, 'Không đăng nhập được. Kiểm tra mã trường, tên đăng nhập và mật khẩu.'));
+            if (!response.ok) throw new Error(await this.responseError(response, 'Không đăng nhập được. Kiểm tra mã trường, tên đăng nhập và mật khẩu.'));
+            const data = await response.json();
             this.acceptLogin(data);
           } catch (error) {
             this.authError = error instanceof TypeError ? 'Không kết nối được API tại http://localhost:5127.' : error.message;
@@ -791,8 +791,8 @@
               method: 'POST', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ token: this.invitationToken, username: this.inviteUsername, password: this.invitePassword })
             });
-            const data = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error(this.apiErrorMessage(data, `Không thể kích hoạt tài khoản (HTTP ${response.status}).`));
+            if (!response.ok) throw new Error(await this.responseError(response, 'Không thể kích hoạt tài khoản'));
+            const data = await response.json();
             this.invitationToken = '';
             this.invitePassword = '';
             try { history.replaceState({}, document.title, window.location.pathname); } catch { }

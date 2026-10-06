@@ -59,7 +59,7 @@ GET {{MonthlyParkingSystem.Api_HostAddress}}/api/v1/auth/staff
 Authorization: Bearer {{mpsToken}}
 Accept: application/json
 
-### Invite Guard or Staff in this school
+### Invite Manager, Guard, or Staff in this school
 POST {{MonthlyParkingSystem.Api_HostAddress}}/api/v1/auth/staff/invitations
 Authorization: Bearer {{mpsToken}}
 Content-Type: application/json

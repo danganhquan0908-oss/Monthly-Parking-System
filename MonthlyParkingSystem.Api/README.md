@@ -60,7 +60,7 @@ $env:MPS_PLATFORM_PROVISIONING_KEY = [Convert]::ToBase64String($platformBytes)
 | `POST` | `/api/v1/auth/accept-invitation` | Accept a single-use invitation and create a school account |
 | `GET` | `/api/v1/auth/staff` | List staff for the authenticated school |
 | `POST` | `/api/v1/auth/staff` | Create a school-scoped Manager/Guard/Staff account directly |
-| `POST` | `/api/v1/auth/staff/invitations` | Issue a 3-day staff invitation (Manager invites Guard/Staff; Admin may invite Manager too) |
+| `POST` | `/api/v1/auth/staff/invitations` | Issue a 3-day school-scoped invitation for Manager, Guard, or Staff (Admin/Manager only) |
 | `GET` | `/api/v1/auth/account-audit` | Read the latest 200 school-scoped account actions |
 | `PUT` | `/api/v1/auth/staff/{id}/active` | Admin/Manager deactivates or reactivates staff in their school |
 | `POST` | `/api/v1/platform/schools` | Platform-key protected school creation and first Manager invitation |
