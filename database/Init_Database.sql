@@ -1,9 +1,9 @@
 /*
     MPS (Monthly Parking System) - SQL Server LocalDB bootstrap
     Fresh or existing database:
-      sqlcmd -S "(localdb)\MSSQLLocalDB" -E -i Init_Database.sql
-      sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i Migrate_Epic5_MultiTenant.sql
-      sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i Migrate_Epic5_1_SelfServiceRegistration.sql
+      sqlcmd -S "(localdb)\MSSQLLocalDB" -E -i database\Init_Database.sql
+      sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i database\Migrate_Epic5_MultiTenant.sql
+      sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i database\Migrate_Epic5_1_SelfServiceRegistration.sql
 
     Students.PhoneEncrypted must contain application-encrypted AES-256 bytes;
     never store a plaintext phone number in this database.

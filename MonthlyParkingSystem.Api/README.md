@@ -1,17 +1,17 @@
 # MPS API
 
-ASP.NET Core Web API for the MPS parking workflow, connected to the SQL Server LocalDB database created by `Init_Database.sql`.
+ASP.NET Core Web API for the MPS parking workflow, connected to the SQL Server LocalDB database created by `database/Init_Database.sql`.
 
 ## Run locally
 
 1. Initialize the database and apply the school-scoped migration from the repository root:
 
    ```powershell
-   sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i Init_Database.sql
-   sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i Migrate_Epic5_MultiTenant.sql
-   sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i Migrate_Epic5_1_SelfServiceRegistration.sql
-   sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i Migrate_Epic5_2_EmailRegistration.sql
-   sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i Migrate_Epic6_EmailNotifications.sql
+   sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i database\Init_Database.sql
+   sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i database\Migrate_Epic5_MultiTenant.sql
+   sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i database\Migrate_Epic5_1_SelfServiceRegistration.sql
+   sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i database\Migrate_Epic5_2_EmailRegistration.sql
+   sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i database\Migrate_Epic6_EmailNotifications.sql
    ```
 
 2. Set a private 32-byte AES key for student phone encryption. Keep the key outside source control and back it up securely; losing it makes saved phone numbers unreadable.
@@ -96,7 +96,7 @@ OTP codes expire after five minutes, allow at most five attempts, and are rate-l
 
 New and edited contracts require a valid student email address. Existing student records keep a nullable email until staff update the contract. The worker skips reminder creation for records without an email, and pauses reminder queuing when SMTP is not configured. The email address is returned unmasked only to Admin/Manager roles; other staff see a masked address.
 
-For an existing database, run `Migrate_Epic3_Notification_DueDate.sql`, `Migrate_Epic4_StaffUsers.sql`, `Migrate_Epic5_MultiTenant.sql`, `Migrate_Epic5_1_SelfServiceRegistration.sql`, `Migrate_Epic5_2_EmailRegistration.sql`, and `Migrate_Epic6_EmailNotifications.sql` before starting the updated API. Epic 6 adds nullable student email storage without deleting existing data, permits Email as a notification-log channel, and reroutes pending reminders to Email. Existing historical SMS/Zalo log entries remain unchanged.
+For an existing database, run the scripts in `database/` in this order: `Migrate_Epic3_Notification_DueDate.sql`, `Migrate_Epic4_StaffUsers.sql`, `Migrate_Epic5_MultiTenant.sql`, `Migrate_Epic5_1_SelfServiceRegistration.sql`, `Migrate_Epic5_2_EmailRegistration.sql`, and `Migrate_Epic6_EmailNotifications.sql`. Apply them before starting the updated API. Epic 6 adds nullable student email storage without deleting existing data, permits Email as a notification-log channel, and reroutes pending reminders to Email. Existing historical SMS/Zalo log entries remain unchanged.
 
 ## Automated tests
 

@@ -30,10 +30,10 @@ MPS hiện là công cụ nội bộ cho nhân viên KTX, chưa có cổng sinh 
 MonthlyParkingSystem.Api/   API, xác thực, truy cập dữ liệu và dịch vụ nền
 MonthlyParkingSystem.Web/   Dashboard, đăng ký trường và trang vận hành nền tảng
 MonthlyParkingSystem.Tests/ Kiểm thử tự động các quy tắc vòng đời hợp đồng
+database/                   Script khởi tạo và nâng cấp SQL Server
+Services/                   Script PowerShell cấu hình dịch vụ ngoài cục bộ
 MPS.sln                    Solution cho API và test project
 .env.example               Tên biến môi trường mẫu, không có bí mật thật
-Init_Database.sql           Khởi tạo schema MPS
-Migrate_*.sql               Các script nâng cấp database theo Epic
 ```
 
 ## Chạy trên máy Windows
@@ -49,11 +49,11 @@ Migrate_*.sql               Các script nâng cấp database theo Epic
 Mở PowerShell tại thư mục gốc repo và chạy:
 
 ```powershell
-sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i Init_Database.sql
-sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i Migrate_Epic5_MultiTenant.sql
-sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i Migrate_Epic5_1_SelfServiceRegistration.sql
-sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i Migrate_Epic5_2_EmailRegistration.sql
-sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i Migrate_Epic6_EmailNotifications.sql
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i database\Init_Database.sql
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i database\Migrate_Epic5_MultiTenant.sql
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i database\Migrate_Epic5_1_SelfServiceRegistration.sql
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i database\Migrate_Epic5_2_EmailRegistration.sql
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -b -i database\Migrate_Epic6_EmailNotifications.sql
 ```
 
 Nếu nâng cấp database đã có dữ liệu, hãy sao lưu trước rồi áp dụng các migration theo thứ tự và hướng dẫn trong [README của API](MonthlyParkingSystem.Api/README.md). Không chạy quy trình khởi tạo database mới lên dữ liệu production.
@@ -87,7 +87,7 @@ Các giá trị bí mật được cung cấp qua biến môi trường hoặc s
 Để cấu hình Gmail SMTP cục bộ cho OTP đăng ký trường, chạy script sau trong PowerShell ở thư mục gốc. Script yêu cầu địa chỉ gửi và nhập app password ở chế độ ẩn, sau đó lưu vào .NET User Secrets ngoài repository:
 
 ```powershell
-.\Configure-Smtp.ps1
+.\Services\Configure-Smtp.ps1
 ```
 
 Backend phải chạy ở môi trường `Development` để nạp User Secrets. Cùng cấu hình SMTP này được dùng cho OTP đăng ký trường và email nhắc sinh viên. Hợp đồng cũ cần được bổ sung email qua thao tác cập nhật; worker chỉ xếp hàng nhắc hạn cho sinh viên có email.

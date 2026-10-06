@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 
-$projectPath = Join-Path $PSScriptRoot 'MonthlyParkingSystem.Api\MonthlyParkingSystem.Api.csproj'
+$projectPath = Join-Path $PSScriptRoot '..\MonthlyParkingSystem.Api\MonthlyParkingSystem.Api.csproj'
 if (-not (Test-Path -LiteralPath $projectPath)) {
     throw "MPS API project was not found at $projectPath"
 }
