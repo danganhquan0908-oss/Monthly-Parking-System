@@ -500,7 +500,8 @@
           <form v-if="invitationToken" @submit.prevent="acceptInvitation">
             <div class="form-group">
               <label for="invite-username">Tên đăng nhập</label>
-              <input id="invite-username" v-model="inviteUsername" autocomplete="username" required minlength="3" maxlength="64" placeholder="Tên đăng nhập">
+              <input id="invite-username" v-model.trim="inviteUsername" autocomplete="username" required minlength="3" maxlength="64" pattern="[\p{L}\p{M}\p{N}._-]{3,64}" title="3–64 ký tự: chữ cái, số, dấu chấm, gạch dưới hoặc gạch nối; không có khoảng trắng." placeholder="Tên đăng nhập">
+              <small style="display:block;margin-top:6px;color:#7a8794">Dùng 3–64 ký tự; chấp nhận chữ tiếng Việt, số, dấu chấm, gạch dưới hoặc gạch nối. Không nhập khoảng trắng.</small>
             </div>
             <div class="form-group">
               <label for="invite-password">Mật khẩu</label>
@@ -518,7 +519,7 @@
             </div>
             <div class="form-group">
               <label for="login-username">Tên đăng nhập</label>
-              <input id="login-username" v-model="loginUsername" autocomplete="username" required minlength="3" maxlength="64" placeholder="Tên đăng nhập">
+              <input id="login-username" v-model.trim="loginUsername" autocomplete="username" required minlength="3" maxlength="64" pattern="[\p{L}\p{M}\p{N}._-]{3,64}" title="3–64 ký tự: chữ cái, số, dấu chấm, gạch dưới hoặc gạch nối; không có khoảng trắng." placeholder="Tên đăng nhập">
             </div>
             <div class="form-group">
               <label for="login-password">Mật khẩu</label>
@@ -776,7 +777,7 @@
               body: JSON.stringify({ schoolCode: this.schoolCode.trim(), username: this.loginUsername, password: this.loginPassword })
             });
             const data = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error(data.message || data.title || 'Không đăng nhập được. Kiểm tra mã trường, tên đăng nhập và mật khẩu.');
+            if (!response.ok) throw new Error(this.apiErrorMessage(data, 'Không đăng nhập được. Kiểm tra mã trường, tên đăng nhập và mật khẩu.'));
             this.acceptLogin(data);
           } catch (error) {
             this.authError = error instanceof TypeError ? 'Không kết nối được API tại http://localhost:5127.' : error.message;
@@ -791,7 +792,7 @@
               body: JSON.stringify({ token: this.invitationToken, username: this.inviteUsername, password: this.invitePassword })
             });
             const data = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error(data.detail || data.message || data.title || `Không thể kích hoạt tài khoản (HTTP ${response.status}).`);
+            if (!response.ok) throw new Error(this.apiErrorMessage(data, `Không thể kích hoạt tài khoản (HTTP ${response.status}).`));
             this.invitationToken = '';
             this.invitePassword = '';
             try { history.replaceState({}, document.title, window.location.pathname); } catch { }
@@ -859,13 +860,29 @@
           return `${date.getFullYear()}-${month}-${day}`;
         },
         dateInput(value) { return value ? String(value).slice(0, 10) : ''; },
+        apiErrorMessage(data, fallback) {
+          if (typeof data === 'string') return data;
+          if (data?.errors && typeof data.errors === 'object') {
+            const messages = [];
+            for (const field of Object.keys(data.errors)) {
+              const key = field.replace(/^\$\./, '').split('.').pop().toLowerCase();
+              if (key === 'username') messages.push('Tên đăng nhập cần 3–64 ký tự, gồm chữ cái (có thể tiếng Việt), số, dấu chấm, gạch dưới hoặc gạch nối; không có khoảng trắng.');
+              else if (key === 'password') messages.push('Mật khẩu phải có từ 12 đến 128 ký tự.');
+              else if (key === 'token') messages.push('Liên kết mời không hợp lệ hoặc bị thiếu. Hãy yêu cầu quản sinh tạo lời mời mới.');
+              else messages.push(`${field}: ${(Array.isArray(data.errors[field]) ? data.errors[field] : [data.errors[field]]).filter(Boolean).join(' ')}`);
+            }
+            if (messages.length) return `Thông tin chưa hợp lệ: ${[...new Set(messages)].join(' ')}`;
+          }
+          const message = data?.detail || data?.message || data?.title;
+          if (message && !/^one or more validation errors occurred\.?$/i.test(message)) return message;
+          return fallback;
+        },
         async responseError(response, fallback) {
           const body = await response.text().catch(() => '');
           if (body) {
             try {
               const data = JSON.parse(body);
-              if (typeof data === 'string') return data;
-              if (data.detail || data.title || data.message) return data.detail || data.title || data.message;
+              return this.apiErrorMessage(data, `${fallback} (HTTP ${response.status}).`);
             } catch { return body; }
           }
           return `${fallback} (HTTP ${response.status}).`;

@@ -16,7 +16,7 @@ public sealed class StartSchoolRegistrationRequest
     [StringLength(24)]
     public string? PhoneNumber { get; init; }
 
-    [Required, RegularExpression("^[A-Za-z0-9._-]{3,64}$")]
+    [Required, RegularExpression(AccountUsernameRules.Pattern)]
     public string Username { get; init; } = string.Empty;
 
     [Required, StringLength(128, MinimumLength = 12)]
