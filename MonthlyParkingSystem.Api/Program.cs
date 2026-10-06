@@ -138,6 +138,8 @@ app.MapGet("/logo.svg", () => Results.File(logoPath, "image/svg+xml"));
 app.MapGet("/favicon.ico", () => Results.File(logoPath, "image/svg+xml"));
 var logoPngPath = Path.Combine(frontendPath, "logo.png");
 app.MapGet("/logo.png", () => Results.File(logoPngPath, "image/png"));
+var vueBundlePath = Path.Combine(frontendPath, "vendor", "vue.global.prod.js");
+app.MapGet("/vendor/vue.global.prod.js", () => Results.File(vueBundlePath, "text/javascript"));
 app.MapControllers();
 
 app.Run();

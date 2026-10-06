@@ -21,7 +21,7 @@ MPS hiện là công cụ nội bộ cho nhân viên KTX, chưa có cổng sinh 
 
 - **Backend:** ASP.NET Core Web API trên .NET 10.
 - **Database:** SQL Server; SQL Server LocalDB dùng cho phát triển trên Windows.
-- **Frontend:** HTML/CSS và Vue 3; backend phục vụ giao diện từ cùng host.
+- **Frontend:** HTML/CSS và Vue 3.5.43 (MIT, kèm license); thư viện được đóng gói trong repo để không cần tải từ CDN, backend phục vụ giao diện từ cùng host.
 - **Xử lý nền:** Background services, hàng đợi thông báo và Polly retry.
 
 ## Cấu trúc thư mục
